@@ -3,6 +3,7 @@ Nothing will be GUI related, but these functions will be used/available in the G
 
 import os
 import pyvisa
+from lowlevel import instantiate_inst
 import clr
 clr.AddReference('ModularZT_NET45')
 from ModularZT_NET45 import USB_ZT
@@ -15,9 +16,11 @@ for directory in os.listdir(os.path.join(dirname, 'inst')):
 	if os.path.isdir(directory):
 		exec(f'inst_library[{directory}] = [f[6:-3] for f in os.listdir({directory}) if "cInst" in f]')
 
+'''
 list_all_resources = []
 for item,key in inst_library:
 	list_all_resources.extend(item)
+'''
 
 '''
 list_power_supply = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'power_supply')) if "cInst" in f]
@@ -52,15 +55,13 @@ class Bench():
 		'''this will launch the "Bench" GUI. It will give access to the things with in Bench like the instrument GUIs'''
 		pass
 
-
-
 def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     """
     Scans all the connected instruments to the PC and initializes the appropriate class
-    gd = globals() to allow a global scope to the instruments
-    do_USB      = True/False     Scan USB connected instruments
-    do_TCPIP    = True/False     Scan LAN connected instruments
-    do_GPIB     = True/False     Scan GPIB connected instruments
+    returns Bench class
+    TCPIP_addresses	= List 			Connect LAN instruments listed
+    do_USB      	= True/False    Scan USB connected instruments
+    do_GPIB     	= True/False    Scan GPIB connected instruments
     """
     
     g_resource = []; u_resource = []; t_resource = []; resource_to_open = []
@@ -77,7 +78,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     						'relay':						[],
     						'unknown':						[]}
     
-    print('Scanning all instruments...', end="\n\n")
+    #print('Scanning all instruments...', end="\n\n")
     rm = pyvisa.ResourceManager()
     all_resource = rm.list_resources()
     
@@ -94,7 +95,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     	mc_relays = USB_ZT()
 		mc_relays_possible_sn = list(mc_relays.Get_Available_SN_List("")[1].split(" "))
         resource_to_open.extend(mc_relays_possible_sn) 
-    if len(TCPIP) > 0:
+    if len(TCPIP_addresses) > 0:
     	for r in t_resource:
     		if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses)
     			resource_to_open.apeend(r)
@@ -135,14 +136,23 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
         
 
         class_name = 'cInst_' + gid
-        if class_name in list_all_resources:
+        #if class_name in list_all_resources:
+
+        unknown = True
+        for instrument_list,instrument_type in inst_library:
+        	if class_name in instrument_list:
+        		unknown = False
+    			dict_available_inst[instrument_type].extend(instantiate_inst(class_name, temp))
+
+    	if unknown:
+    		from cInst_unkown import cInst_unknown
+    		dict_available_inst['unknown'].append(instantiate_inst('cInst_unknown', temp))
 
 
-
-'''need to add imports'''
-
+	return Bench(dict_available_inst)
 
 
+		'''
         class_name = 'cInst_' + gid
         if gid in list_power_supply:
             if gid == "E3631A":
@@ -192,8 +202,10 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     gd['PNA'] = PNA; gd['Meter'] = Meter; gd['FreqCntr'] = FreqCntr; gd['SpecAn'] = SpecAn; 
     gd['Oscope'] = Oscope; gd['Dscope'] = Dscope; gd['Relay'] = Relay; gd['Unknown'] = Unknown
     gd["Troubled"] = Troubled
-    
+    '''
+
     # Printing all instruments and GPIB Addresses
+    '''
     char_length = 100
     print('')
     print("="*char_length)
@@ -221,4 +233,5 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     if not do_USB:
         print(u_resource)
     print('-'*int(char_length/2))
+    '''
 
