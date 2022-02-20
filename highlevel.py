@@ -3,18 +3,19 @@ Nothing will be GUI related, but these functions will be used/available in the G
 
 import os
 import pyvisa
-from lowlevel import instantiate_inst
+from .lowlevel import instantiate_inst
 import clr
-clr.AddReference('ModularZT_NET45')
-from ModularZT_NET45 import USB_ZT
 
 ### Builds the lists containing the library content
 dirname = os.path.dirname(os.path.abspath(__file__))
 
+clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
+from ModularZT_NET45 import USB_ZT
+
 inst_library = {}
 for directory in os.listdir(os.path.join(dirname, 'inst')):
-	if os.path.isdir(directory):
-		exec(f'inst_library[{directory}] = [f[6:-3] for f in os.listdir({directory}) if "cInst" in f]')
+    if os.path.isdir(os.path.join(dirname, 'inst', directory)):
+        exec(f'inst_library["{directory}"] = [f[6:-3] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
 
 '''
 list_all_resources = []
@@ -55,6 +56,9 @@ class Bench():
 		'''this will launch the "Bench" GUI. It will give access to the things with in Bench like the instrument GUIs'''
 		pass
 
+def launch_gui():
+    pass
+
 def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     """
     Scans all the connected instruments to the PC and initializes the appropriate class
@@ -92,12 +96,12 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
 
     if do_USB:
         resource_to_open.extend(u_resource)
-    	mc_relays = USB_ZT()
-		mc_relays_possible_sn = list(mc_relays.Get_Available_SN_List("")[1].split(" "))
+        mc_relays = USB_ZT()
+        mc_relays_possible_sn = list(mc_relays.Get_Available_SN_List("")[1].split(" "))
         resource_to_open.extend(mc_relays_possible_sn) 
     if len(TCPIP_addresses) > 0:
     	for r in t_resource:
-    		if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses)
+    		if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
     			resource_to_open.apeend(r)
     if do_GPIB:
         resource_to_open.extend(g_resource)
@@ -140,19 +144,19 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
 
         unknown = True
         for instrument_list,instrument_type in inst_library:
-        	if class_name in instrument_list:
-        		unknown = False
-    			dict_available_inst[instrument_type].extend(instantiate_inst(class_name, temp))
+            if class_name in instrument_list:
+                unknown = False
+                dict_available_inst[instrument_type].extend(instantiate_inst(class_name, temp))
 
-    	if unknown:
-    		from cInst_unkown import cInst_unknown
-    		dict_available_inst['unknown'].append(instantiate_inst('cInst_unknown', temp))
-
-
-	return Bench(dict_available_inst)
+        if unknown:
+            from cInst_unkown import cInst_unknown
+            dict_available_inst['unknown'].append(instantiate_inst('cInst_unknown', temp))
 
 
-		'''
+        return Bench(dict_available_inst)
+
+
+'''
         class_name = 'cInst_' + gid
         if gid in list_power_supply:
             if gid == "E3631A":
@@ -205,7 +209,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     '''
 
     # Printing all instruments and GPIB Addresses
-    '''
+'''
     char_length = 100
     print('')
     print("="*char_length)
