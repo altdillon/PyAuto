@@ -1,8 +1,6 @@
-import re
-
 class cInst:
     '''
-    Master Instruments class which abstracts pyvisa
+    Master Instrument class which abstracts pyvisa
     '''
     
     def __init__(self,inst, inst_id, connection_mode, address):
@@ -24,8 +22,7 @@ class cInst:
         pass
 
     def reset(self):
-        pass
+        self.comm('*RST')
 
     def disconnect(self):
         self.inst.close()
-        pass
