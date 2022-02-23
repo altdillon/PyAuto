@@ -17,26 +17,6 @@ for directory in os.listdir(os.path.join(dirname, 'inst')):
     if os.path.isdir(os.path.join(dirname, 'inst', directory)):
         exec(f'inst_library["{directory}"] = [f[6:-3] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
 
-'''
-list_all_resources = []
-for item,key in inst_library:
-	list_all_resources.extend(item)
-'''
-
-'''
-list_power_supply = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'power_supply')) if "cInst" in f]
-list_signal_generator = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'signal_generator')) if "cInst" in f]
-list_arbitrary_waveform_generator = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'arbitrary_waveform_generator')) if "cInst" in f]
-list_meter = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'meter')) if "cInst" in f]
-list_temperature_chamber = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'temperature_chamber')) if "cInst" in f]
-list_frequency_counter = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'frequency_counter')) if "cInst" in f]
-list_oscilloscope = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'oscilloscope')) if "cInst" in f]
-list_relay = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'relay')) if "cInst" in f]
-list_spectrum_analyzer = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'spectrum_analyzer')) if "cInst" in f]
-list_phase_noise_analyzer = [f[6:-3] for f in os.listdir(os.path.join(dirname, 'inst', 'phase_noise_analyzer')) if "cInst" in f]
-list_all_resources = list_power_supply+list_signal_generator+list_arbitrary_waveform_generator+list_meter+list_temperature_chamber+list_frequency_counter+list_oscilloscope+list_relay+list_spectrum_analyzer+list_phase_noise_analyzer
-'''
-
 class Bench():
 	'''This class represents the bench that is hooked up to the computer. It will be created by the "scan_bench" function.'''
 	def __init__(self,dict_inst):
