@@ -41,6 +41,12 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     from ModularZT_NET45 import USB_ZT
     g_resource = []; u_resource = []; t_resource = []; resource_to_open = []
 
+    dict_available_inst = {}
+    for directory in os.listdir(os.path.join(dirname, 'inst')):
+        if os.path.isdir(os.path.join(dirname, 'inst', directory)) and directory != '__pycache__':
+            dict_available_inst[directory] = []
+
+    '''
     dict_available_inst = {	'power_supply':			[],
                                 'signal_generator':		[],
                                 'temperature_chamber':		[],
@@ -52,6 +58,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
                                 'phase_noise_analyzer':		[],
                                 'relay':			[],
                                 'unknown':			[]}
+    '''
     
     #print('Scanning all instruments...', end="\n\n")
     rm = pyvisa.ResourceManager()
@@ -123,7 +130,6 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
                 dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode))
 
         if unknown:
-            dict_available_inst['unknown'].append(instantiate_inst('unknown', temp, connection_mode))
-
+            dict_available_inst['unknown'].extend(instantiate_inst('unknown', temp, connection_mode))
 
     return Bench(dict_available_inst)
