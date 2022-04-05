@@ -123,7 +123,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
                 dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode))
 
         if unknown:
-            dict_available_inst['unknown'].append(instantiate_inst('unknown', temp, connection_mode))
+            dict_available_inst['unknown'].extend(instantiate_inst('unknown', temp, connection_mode))
 
 
     return Bench(dict_available_inst)
