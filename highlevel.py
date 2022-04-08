@@ -127,9 +127,9 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
         for instrument_type,instrument_list in inst_library.items():
             if gid in instrument_list:
                 unknown = False
-                dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode))
+                dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode, unknown))
 
         if unknown:
-            dict_available_inst['unknown'].extend(instantiate_inst('unknown', temp, connection_mode))
+            dict_available_inst['unknown'].extend(instantiate_inst(gid, temp, connection_mode, unknown))
 
     return Bench(dict_available_inst)
