@@ -13,7 +13,7 @@ class cInst:
         if '?' in command:
             return self.inst.query(command)
         else:
-            return self.inst.write(command)
+            self.inst.write(command)
 
     def set_address(self, address):
         pass

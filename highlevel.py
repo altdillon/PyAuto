@@ -45,20 +45,6 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     for directory in os.listdir(os.path.join(dirname, 'inst')):
         if os.path.isdir(os.path.join(dirname, 'inst', directory)) and directory != '__pycache__':
             dict_available_inst[directory] = []
-
-    '''
-    dict_available_inst = {	'power_supply':			[],
-                                'signal_generator':		[],
-                                'temperature_chamber':		[],
-                                'meter':			[],
-                                'arbitrary_waveform_generator':	[],
-                                'frequency_counter':		[],
-                                'oscilloscope':			[],
-                                'spectrum_analyzer':		[],
-                                'phase_noise_analyzer':		[],
-                                'relay':			[],
-                                'unknown':			[]}
-    '''
     
     #print('Scanning all instruments...', end="\n\n")
     rm = pyvisa.ResourceManager()
