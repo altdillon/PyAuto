@@ -10,6 +10,16 @@ class cInst_oscilloscope(cInst):
         """Performs front panel equivalent of AUTOSET"""
         self.comm("AUTOS EXEC")
 
+    def set_persistence(self, state):
+        '''
+        Sets the state of persistence (resets if already on)
+        state : boolean as to whther or not persistence is on
+        '''
+        if state:
+            self.comm('DISplay:PERSistence ON')
+            self.comm('DISplay:PERSistence:RESET')
+        else:
+            self.comm('DISplay:PERSistence OFF')
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Horizontal Methods           '''
@@ -27,13 +37,19 @@ class cInst_oscilloscope(cInst):
         """
         return float(self.comm("HOR:SCA?"))
 
-    def set_time_delay(self):
-        pass
+    def set_time_delay(self, delay):
+        '''
+        Sets the horizontal delay in seconds
+        '''
+        self.comm(f'HOR:DEL:TIME {delay}')
 
     def get_time_delay(self):
-        pass
+        '''
+        Returns the horizontal delay in seconds
+        '''
+        return float(self.comm(f'HOR:DEL:TIME?'))
 
-    def set_sampling_rate(self, rate = 20e9):
+    def set_sampling_rate(self, rate):
         """
         Set the sampling rate of the scope. Based on the time axis duration, the value set may be adjusted automatically by the scope
         rate : sampling rate in samples/second
@@ -46,7 +62,7 @@ class cInst_oscilloscope(cInst):
         """
         return float(self.comm("HOR:MAIN:SAMPLER?"))
 
-    def set_record_length(self, record_length = 1000):
+    def set_record_length(self, record_length):
         """
         Sets the number of points that can be acquired per waveform with current time base and sampling rate setting
         record_length = numeric value
@@ -59,7 +75,7 @@ class cInst_oscilloscope(cInst):
         """
         return float(self.comm(f"HOR:RECO?"))
 
-    def set_horizontal_mode(self, mode = 'AUTO'):
+    def set_horizontal_mode(self, mode):
         """
         Sets the mode to determine correlation between sampling rate, time base and record length
         mode = 'Auto'       Auto mode attempts to keep record length constant as you change the time per division setting. Record length is read only
@@ -198,8 +214,28 @@ class cInst_oscilloscope(cInst):
         Returns the deskew value of the given channel in seconds
         channel : integer of the channel
         '''
-        return float(self.comm(f"{channel}:DESKEW?"))
+        return float(self.comm(f"CH{channel}:DESKEW?"))
 
+    def set_math(self, channel1, channel2, operation, channel = None):
+        """
+        Sets up a math operation ({channel1} {operation} {channel2})
+        channel1 : integer of first channel in equation
+        channel2 : integer of second channel in equation
+        operation : '+' or '-'
+        channel : integer of math channel to set up (if unspecified, adds a new math signal)
+        """
+        if channel == None:
+            for i in range(1,4):
+                if self.get_channel_state(i, True):
+                    channel = i + 1
+        self.comm(f"MATH{channel}:DEFINE CH{channel1}{operation}CH{channel2}")
+        self.comm(f"SELECT:MATH{channel} ON")
+
+    def get_math(self, channel):
+        '''
+        Returns the string representation of the math equation
+        '''
+        return self.comm(f'MATH{channel}:DEFINE?')
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Channel Methods              '''
@@ -304,37 +340,239 @@ class cInst_oscilloscope(cInst):
         else:
             raise ValueError("mtype mus be one of the following:  ['amplitude', 'high', 'low', 'max', 'min', 'mean', 'pk2pk', 'under', 'over', 'rise', 'fall', 'pduty', 'nduty', 'frequency', 'delay']")
 
+    def get_measurement(self, measurement_number):
+        '''
+        Returns a dictionary of the measurement parameters [type, channel, math, (channel2, math2, edge1, edge2, direction)]
+        measurement_number : integer of the measurement
+        '''
+        if not int(self.comm(f"MEASU:MEAS{measurement_number}:STATE?")):
+            raise ValueError('The measurement for this measurement_number is not set up')
+
+        ret = {}
+
+        mtype = self.comm(f'MEASU:MEAS{measurement_number}:TYP?')
+        if mtype.lower() in 'amplitude':
+            ret['type'] = 'amplitude'
+        elif mtype.lower() in 'rise':
+            ret['type'] = 'rise'
+        elif mtype.lower() in 'fall':
+            ret['type'] = 'fall'
+        elif mtype.lower() in 'pk2pk':
+            ret['type'] = 'pk2pk'
+        elif mtype.lower() in 'frequency':
+            ret['type'] = 'frequency'
+        elif mtype.lower() in 'pduty':
+            ret['type'] = 'pduty'
+        elif mtype.lower() in 'nduty':
+            ret['type'] = 'nduty'
+        elif mtype.lower() in 'high':
+            ret['type'] = 'high'
+        elif mtype.lower() in 'low':
+            ret['type'] = 'low'
+        elif mtype.lower() in 'max':
+            ret['type'] = 'max'
+        elif mtype.lower() in 'mini':
+            ret['type'] = 'min'
+        elif mtype.lower() in 'mean':
+            ret['type'] = 'mean'
+        elif mtype.lower() in 'pov':
+            ret['type'] = 'over'
+        elif mtype.lower() in 'nov':
+            ret['type'] = 'under'
+        elif mtype.lower() in 'delay':
+            ret['type'] = 'delay'
+        else:
+            ret['type'] = 'unknown'
+
+
+            source = self.comm(f'MEASU:MEAS{measurement_number}:SOU2?')
+            ret['math2'] = 'MATH' in source.upper():
+            ret['channel2'] = int(source[-2:-1])
+            edge1 = self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE1?")[:-1]
+            if edge1.lower() in 'rise':
+                ret['edge1'] = 1
+            elif edge1.lower() in 'fall':
+                ret['edge1'] = 0
+            else:
+                ret['edge1'] = 'unknown'
+            edge2 = self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE2?")[:-1]
+            if edge2.lower() in 'rise':
+                ret['edge2'] = 1
+            elif edge2.lower() in 'fall':
+                ret['edge2'] = 0
+            else:
+                ret['edge2'] = 'unknown'
+            direction = self.comm(f"MEASU:MEAS{measurement_number}:DEL:DIRE?")[:-1]
+            if direction.lower() in 'forward':
+                ret['direction'] = 1
+            elif direction.lower() in 'backward':
+                ret['direction'] = 0
+            else:
+                ret['direction'] = 'unknown'
+            
+
+        source = self.comm(f'MEASU:MEAS{measurement_number}:SOU1?')
+        ret['math'] = 'MATH' in source.upper():
+        ret['channel'] = int(source[-2:-1])
+
+        return ret
+
+    def meas_measurement(self, measurement_number):
+        '''
+        Returns the last captured value of the measurement
+        measurement_number : integer of measurement
+        '''
+        return float(f"MEASU:MEAS{measurement_number}?")
+
+    def meas_mean_measurement(self,measurement_number):
+        '''
+        Returns the mean of the measurement
+        measurement_number : integer of measurement
+        '''
+        return float(self.comm(f'MEASU:MEAS{measurement_number}:MEAN?'))
+
+    def meas_max_measurement(self,measurement_number):
+        """
+        Returns the max of the measurement
+        measurement_number : integer of measurement
+        """
+        return float(self.comm(f"MEASU:MEAS{measurement_number}:MAX?"))
+
+    def meas_min_measurement(self,measurement_number):
+        """
+        Returns the min of the measurement
+        measurement_number : integer of measurement
+        """
+        return float(self.comm(f"MEASU:MEAS{measurement_number}:MINI?"))   
+
+    def set_measurement_reference(self, measurement_number, reference_type, threshold, level):
+        '''
+        Sets the measurement reference position
+        measurement_number : integer of measurement
+        reference_type : 'percent' or 'absolute'
+        threshold : 'high', 'mid', or 'low'
+        level : a percentage if reference type is 'percent' or a voltage if reference type is 'absolute'
+        '''
+        if reference_type.upper() in 'PERCENT':
+            self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod PERcent')
+            self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:{threshold.upper()} {level}")
+            
+        elif reference_type.upper() in 'ABSOLUTE':
+            self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod ABSolute')
+            self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABS:{threshold.upper()} {level}")
+
+        else:
+            raise ValueError('reference_type must be either "percent" or "absolute"')
+
+    def get_measurement_reference(self, measurement_number):
+        '''
+        Returns a dictionary of the measurement reference postion parameters [reference_type, threshold, level]
+        measurement_number : integer of the measurement
+        '''
+        ret = {}
+        reference_type = self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod?')
+        if reference_type.lower() in 'percent':
+            ret['reference_type'] = 'percent'
+            ret['level_high'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:HIGH?"))
+            ret['level_mid'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:MID?"))
+            ret['level_low'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:LOW?"))    
+        elif reference_type.lower() in 'absolute':
+            ret['reference_type'] = 'absolute'
+            ret['level_high'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:HIGH?"))
+            ret['level_mid'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:MID?"))
+            ret['level_low'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:LOW?"))  
+        else:
+            ret['reference_type'] = 'unknown'
+            ret['level_high'] = 'unknown'
+            ret['level_mid'] = 'unknown'
+            ret['level_low'] = 'unknown'
+        
+    def reset_measurement_statistics(self):
+        '''
+        Resets the measurement stats
+        '''
+        self.comm("MEASU:STATI:COUNT RESET")
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Measurement Methods          '''
     ''''''''''''''''''''''''''''''''''''''''''''''''
 
+
     ''''''''''''''''''''''''''''''''''''''''''''''''
-    '''             Unedited Below               '''
+    '''             Trigger Methods              '''
     ''''''''''''''''''''''''''''''''''''''''''''''''
-
-
-    def meas_mean_measurement(self,measurement_number = 1):
-        '''
-        returns mean measurement
-        '''
-        return float(self.comm('MEASU:MEAS{}:Mean?'.format(measurement_number)))
-
-    def meas_max_measurement(self,measurement_number = 1):
+        
+    def set_trigger_source(self, trigger, channel, math):
         """
-        Returns the max value of the measurement since stat reset
+        Sets the trigger source
+        trigger : 'a' or 'b'
+        channel : integer of the channel
+        math : boolean as to whether or not the channel integer refers to a math channel
         """
-        return float(self.comm(f"MEASU:MEAS{measurement_number}:MAX?"))
+        if math:
+            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR MATH{channel}")
+        else:
+            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR CH{channel}")
 
-    def meas_min_measurement(self,measurement_number = 1):
+    def set_trigger_level(self, trigger, level):
         """
-        Returns the max value of the measurement since stat reset
+        Returns trigger level in volts
+        trigger : 'a' or 'b'
+        level : voltage value (V) or "center"
+        """ 
+        if level.lower() in 'center':
+            self.comm(f"TRIG:{trigger.upper()}:LEV SETL")
+        else:
+            self.comm(f"TRIG:{trigger.upper()}:LEV {level}")
+    
+    def set_trigger_edge(self, trigger, edge):
         """
-        return float(self.comm(f"MEASU:MEAS{measurement_number}:MINI?"))        
+        Returns trigger edge direction
+        trigger : 'a' or 'b'
+        edge : 'rise', 'fall', or 'either'
+        """ 
+        if edge.upper() in "RISE":
+            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE RISE")
+        elif edge.upper() in "FALL":
+            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE FALL")
+        else:
+            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE EITHER")
+
+    def get_trigger_source(self, trigger):
+        """
+        Returns trigger source
+        trigger : 'a' or 'b'
+        """
+        return self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR?")[:-1]
+
+    def get_trigger_level(self, trigger):
+        """
+        Returns trigger level in volts
+        trigger : 'a' or 'b'
+        """ 
+        return float(self.comm(f"TRIG:{trigger.upper()}:LEV?"))
+    
+    def get_trigger_edge(self, trigger):
+        """
+        Returns trigger edge direction
+        trigger : 'a' or 'b'
+        """ 
+        return self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE?")[:-1]
+
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    '''             Trigger Methods              '''
+    ''''''''''''''''''''''''''''''''''''''''''''''''   
+
+   
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    '''             Trace/Plot Methods           '''
+    ''''''''''''''''''''''''''''''''''''''''''''''''   
 
     def get_plot(self, filename, invert = False):
         '''
-        Gets plot from scope and save it to the filename (full path) as a png passed to the function
+        Gets the plot from scope and saves it to the filename (full path) as a png
+        filename : full path of file to save image to (must end in .png)
+        invert : boolean as to whether or not the color of the image is inverted
         '''
         self.comm("EXPORT:FORMAT PNG")
         
@@ -365,41 +603,173 @@ class cInst_oscilloscope(cInst):
 
         self.inst.timeout = timeout
 
-        with open(filename,'wb') as fp:
-            fp.write(raw)
+        try:
+            #image was transfered correctly
+            with open(filename,'wb') as fp:
+                fp.write(raw)
+        except:
+            #image was transfered incorrectly
+            with open(filename + '.txt','w') as fp:
+                fp.write(raw)
 
+    def get_trace_data(channel, math = False):
+        '''
+        Returns the data points of the channel as a list of floats
+        channel : integer of channel (0 = x data)
+        math : boolean as to whether or not the channel integer refers to a math channel
+        '''
+        ydata = []
+        xdata = []
 
-    def set_run_mode(self,mode = "RUN"):
+        if math:
+            self.comm(f"DATA:SOU MATH{channel}")
+        elif channel == 0:
+            self.comm(f"DATA:SOU CH1")
+        else:
+            self.comm(f"DATA:SOU CH{channel}")
+        self.comm(f"DATA:ENC ASCI")
+        self.comm("HEAD 0")
+        y_mult = float(self.comm("WFMO:YMULT?"))
+        y_offs = float(self.comm("WFMO:YOFF?"))
+        y_zero = float(self.comm("WFMO:YZERO?"))
+        x_zero = float(self.comm("WFMO:XZERO?"))
+        x_inc = float(self.comm("WFMO:XINCR?"))
+        x_ptoffset = float(self.comm("WFMO:PT_OFF?"))
+        xy_trace = [int(a) for a in self.comm("CURV?").split(",")]
+
+        for x,y in enumerate(xy_trace):
+            ydata.append((float(y)-y_offs)*y_mult + y_zero)
+            xdata.append((float(x)-x_ptoffset)*x_inc + x_zero)
+
+        if channel == 0:
+            return xdata
+        else:
+            return ydata
+
+    def get_trace_to_file(self, channel, filename, math = False):
         """
-        Set the waveform acquisition run mode
-        mode = 'RUN' or 'SINGLE'
+        Gets the trace data and saves it to the given txt file in two data columns
+        channel : integer of channel
+        filename : full path of file to save image to (must end in .txt)
+        math : boolean as to whether or not the channel integer refers to a math channel
+        """
+        ydata = []
+        xdata = []
+
+        if math:
+            self.comm(f"DATA:SOU MATH{channel}")
+        else:
+            self.comm(f"DATA:SOU CH{channel}")
+        self.comm(f"DATA:ENC ASCI")
+        self.comm("HEAD 0")
+        y_mult = float(self.comm("WFMO:YMULT?"))
+        y_offs = float(self.comm("WFMO:YOFF?"))
+        y_zero = float(self.comm("WFMO:YZERO?"))
+        x_zero = float(self.comm("WFMO:XZERO?"))
+        x_inc = float(self.comm("WFMO:XINCR?"))
+        x_ptoffset = float(self.comm("WFMO:PT_OFF?"))
+        xy_trace = [int(a) for a in self.comm("CURV?").split(",")]
+
+        for x,y in enumerate(xy_trace):
+            ydata.append((float(y)-y_offs)*y_mult + y_zero)
+            xdata.append((float(x)-x_ptoffset)*x_inc + x_zero)
+
+        with open(filename, 'w') as f:
+            for col1,col2 in zip(xdata,ydata):
+                f.writelines(f"{col1}\t{col2}\n")
+
+
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    '''             Trace/Plot Methods           '''
+    ''''''''''''''''''''''''''''''''''''''''''''''''   
+
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    '''             Run/Acquisition Methods      '''
+    '''''''''''''''''''''''''''''''''''''''''''''''' 
+
+    def set_run_mode(self, mode):
+        """
+        Sets the waveform acquisition run mode
+        mode = 'run' or 'single'
         """
         if mode.upper() in "SINGLE":
             self.comm("ACQ:STOPA SEQ")
-            #self.comm("ACQ:STATE OFF")
         elif mode.upper() in "RUN":
             self.comm("ACQ:STOPA RUNST")
-            #self.comm("ACQ:STATE ON")
         else:
-            raise ValueError('Unknown mode value. Please use either "SINGLE" or "RUN".') 
+            raise ValueError('Unknown mode value. Please use either "single" or "run".') 
 
     def get_run_mode(self):
         """
-        Set the waveform acquisition run mode. Returns a string 'RUN' or 'SINGLE'
+        Gets the waveform acquisition run mode. Returns a string 'RUN' or 'SINGLE'
         """
-        return self.comm("ACQ:STOPA?")
+        return self.comm("ACQ:STOPA?")[:-1]
 
-    def set_run_state(self, state = 1):
+    def set_run_state(self, state):
         """
-        Start or stop acquisition. Call this after setting set_run_mode('Single').
+        Starts or stops the acquisition. Call this after setting set_run_mode('Single').
+        state : boolean or 1/0
         """
         if state:
             self.comm("ACQ:STATE ON")
         else:
             self.comm("ACQ:STATE OFF")
 
-    def set_run_state(self, state = 1):
+    def get_run_state(self):
         """
-        Get acquisition state
+        Gets the acquisition state
         """
-        self.comm("ACQ:STATE?")
+        return self.comm("ACQ:STATE?")
+
+    def set_acquisition_mode(self, mode):
+        """
+        Sets the acquisition type
+        mode = sample, peakdet, hires, average, envelope
+        """
+        if mode.lower() in "sample":
+            self.comm(f'ACQ:MOD SAM')
+        elif mode.lower() in "peakdet":
+            self.comm(f'ACQ:MOD PEAK')
+        elif mode.lower() in "hires":
+            self.comm(f'ACQ:MOD HIR')
+        elif mode.lower() in "average":
+            self.comm(f'ACQ:MOD AVE')
+        elif mode.lower() in "envelope":
+            self.comm(f'ACQ:MOD ENV')
+        else:
+            raise ValueError('Unknown acquisition mode. Must be set to [sample, peakdet, hires, average, envelope]')
+
+    def get_acquisition_mode(self):
+        """
+        Returns the acquisition mode as a string
+        """
+        mode = self.comm(f'ACQ:MOD?')[:-1]
+        if mode.lower() in "sample":
+            return 'sample'
+        elif mode.lower() in "peakdet":
+            return 'peakdet'
+        elif mode.lower() in "hires":
+            return 'hires'
+        elif mode.lower() in "average":
+            return 'average'
+        elif mode.lower() in "envelope":
+            return 'envelope'
+        else:
+            return 'unknown'
+    
+    def set_acquisition_average_count(self, count):
+        """
+        Sets the number of waveforms to be acquired in averaging mode. For this, the averaging mode must be selected with set_acquisition_mode('average').
+        count : number of waveforms to average
+        """
+        self.comm(f"ACQ:NUMAVG {count}")
+
+    def get_acquisition_average_count(self):
+        """
+        Returns number of waveforms selected for average
+        """
+        return int(self.comm("ACQ:NUMAVG?"))
+
+    ''''''''''''''''''''''''''''''''''''''''''''''''
+    '''             Run/Acquisition Methods      '''
+    '''''''''''''''''''''''''''''''''''''''''''''''' 
