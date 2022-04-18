@@ -6,49 +6,32 @@ def cInst_E3631A(inst, inst_id, connection_mode, address):
             cInst_E3631A_2(inst, inst_id, connection_mode, address),
             cInst_E3631A_3(inst, inst_id, connection_mode, address)]
 
-class cInst_E3631A_1(cInst_power_supply, metaclass = Meta):
+class cInst_E3631A_1(cInst_power_supply):
     '''
     TBD
     '''
-    def __init__(self, inst, inst_id, connection_mode, address):
-        cInst_power_supply.__init__(self, inst, inst_id, connection_mode, address)
-        self.channel = 1
+    def set_channel(self):
+        '''
+        Sets the channel since this is a multi-channel supply
+        '''
+        self.comm("INST:SEL P6V")
 
-    pass
-
-class cInst_E3631A_2(cInst_power_supply, metaclass = Meta):
+class cInst_E3631A_2(cInst_power_supply):
     '''
     TBD
     '''
-    def __init__(self, inst, inst_id, connection_mode, address):
-        cInst_power_supply.__init__(self, inst, inst_id, connection_mode, address)
-        self.channel = 2
+    def set_channel(self):
+        '''
+        Sets the channel since this is a multi-channel supply
+        '''
+        self.comm("INST:SEL P25V")
 
-    pass
-
-class cInst_E3631A_3(cInst_power_supply, metaclass = Meta):
+class cInst_E3631A_3(cInst_power_supply):
     '''
     TBD
     '''
-    def __init__(self, inst, inst_id, connection_mode, address):
-        cInst_power_supply.__init__(self, inst, inst_id, connection_mode, address)
-        self.channel = 3
-
-    pass
-
-def wrapper(channel):
-    def inner(method):
-        def wrapped(*args, **kwargs):
-            self.set_channel(self.channel)
-            method(*args, **kwargs)
-        return wrapped
-    return inner
-
-class Meta(type):
-    def __new__(cls, name, bases, dct):
-        newdct = {}
-        for attributeName, attribute in dct.items():
-            if isinstance(attribute, FunctionType):
-                attribute = wrapper(attribute)
-            newdct[attributeName] = attribute
-        return super().__new__(cls, name, bases, newdct)
+    def set_channel(self):
+        '''
+        Sets the channel since this is a multi-channel supply
+        '''
+        self.comm('INST:SEL N25V')
