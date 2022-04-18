@@ -1,14 +1,19 @@
-from cInst import cInst
+from cInst_power_supply import cInst_power_supply
 
-class cInst_power_supply(cInst):
+def cInst_N6700C(inst, inst_id, connection_mode, address):
+    channels = int(inst.query('SYST:CHAN?'))
+    ret = []
+    for i in range(channels):
+        ret.append(cInst_N6700C_x(inst, inst_id, connection_mode, address, i+1))
+    return ret
+
+class cInst_N6700C_x(cInst_power_supply):
     '''
-    power supply main class
+    TBD
     '''
-    def set_channel(self):
-        '''
-        dummy set channel for supplies that have multiple channels
-        '''
-        pass
+    def __init__(self, inst, inst_id, connection_mode, address, channel):
+        super().__init__(inst, inst_id, connection_mode, address)
+        self.channel = channel
 
     def set_current(self, current):
         '''
@@ -17,21 +22,21 @@ class cInst_power_supply(cInst):
         '''
         self.set_channel()
         #Add error handling (see voltage)
-        self.comm(f'CURR {current}')
+        self.comm(f'CURR {current}, (@{self.channel})')
 
     def get_current(self):
         '''
         Returns the current limit in A
         '''
         self.set_channel()
-        return float(self.comm('CURR?'))
+        return float(self.comm(f'CURR? (@{self.channel})'))
 
     def meas_current(self):
         '''
         Returns the measured current from the device in A
         '''
         self.set_channel()
-        return float(self.comm('MEAS:CURR?'))
+        return float(self.comm(f'MEAS:CURR? (@{self.channel})'))
 
     def set_voltage(self, voltage):
         '''
@@ -41,35 +46,21 @@ class cInst_power_supply(cInst):
         self.set_channel()
         #Need to add voltage level check for supplies that have voltage ranges
         #Need to have error for voltages that are too high as well
-        self.comm(f'VOLT {voltage}')
+        self.comm(f'VOLT {voltage}, (@{self.channel})')
 
     def get_voltage(self):
         '''
         Returns the voltage limit in V
         '''
         self.set_channel()
-        return float(self.comm('VOLT?'))
+        return float(self.comm(f'VOLT? (@{self.channel})'))
 
     def meas_voltage(self):
         '''
         Returns the measured voltage from the device in V
         '''
         self.set_channel()
-        return float(self.comm('MEAS:VOLT?'))
-
-    def get_power(self):
-        """
-        Returns the maximum output power = V(limit) * I(limit)
-        """
-        self.set_channel()
-        return self.get_voltage() * self.get_current()
-
-    def meas_power(self):
-        """
-        Returns the output power = V * I
-        """
-        self.set_channel()
-        return self.meas_voltage() * self.meas_current()
+        return float(self.comm(f'MEAS:VOLT? (@{self.channel})'))
 
     def set_out_state(self, state):
         '''
@@ -78,13 +69,13 @@ class cInst_power_supply(cInst):
         '''
         self.set_channel()
         if state:
-            self.comm('OUTP ON')
+            self.comm(f'OUTP ON, (@{self.channel})')
         else:
-            self.comm('OUTP OFF')
+            self.comm(f'OUTP OFF, (@{self.channel})')
 
     def get_out_state(self):
         '''
         Returns the output state
         '''
         self.set_channel()
-        return int(self.comm('OUTP?'))
+        return int(self.comm(f'OUTP? (@{self.channel})'))
