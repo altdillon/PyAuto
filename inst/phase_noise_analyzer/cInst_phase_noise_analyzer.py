@@ -4,4 +4,6 @@ class cInst_phase_noise_analyzer(cInst):
     '''
     phase noise analyzer main class
     '''
-    pass
+    def __init__(self, inst, inst_id, connection_mode, address):
+        super().__init__(inst, inst_id, connection_mode, address)
+        self.type = 'phase_noise_analyzer'

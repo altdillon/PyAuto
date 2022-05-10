@@ -1,17 +1,19 @@
-from cInst import cInst
-import time
+from cInst_oscilloscope import cInst_oscilloscope
 
-class cInst_oscilloscope(cInst):
+class cInst_DS8104R(cInst_oscilloscope):
     '''
-    oscilloscope main class
+    TBD
     '''
     def __init__(self, inst, inst_id, connection_mode, address):
         super().__init__(inst, inst_id, connection_mode, address)
-        self.type = 'oscilloscope'
+        self.dict_measurements = {}
+        self.run_mode = 'run'
+        self.run_state = 1
 
     def set_auto_scale(self):
         """Performs front panel equivalent of AUTOSET"""
-        self.comm("AUTOS EXEC")
+        self.comm("SYST:AUT ON")
+        self.comm("AUT")
 
     def set_persistence(self, state):
         '''
@@ -19,10 +21,10 @@ class cInst_oscilloscope(cInst):
         state : boolean as to whther or not persistence is on
         '''
         if state:
-            self.comm('DISplay:PERSistence ON')
-            self.comm('DISplay:PERSistence:RESET')
+            self.comm('DISPlay:GRADing:TIME INF')
+            self.comm('DISPlay:CLEar')
         else:
-            self.comm('DISplay:PERSistence OFF')
+            self.comm('DISPlay:GRADing:TIME MIN')
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Horizontal Methods           '''
@@ -32,51 +34,54 @@ class cInst_oscilloscope(cInst):
         '''
         sets horizontal scale (seconds/division)
         '''
-        self.comm(f'HORIZONTAL:SCA {time_scale}')
+        self.comm(f'TIM:SCAL {time_scale}')
 
     def get_time_scale(self):
         """
         Returns the time base(second per division)
         """
-        return float(self.comm("HOR:SCA?"))
+        return float(self.comm("TIM:SCAL?"))
 
     def set_time_delay(self, delay):
         '''
         Sets the horizontal delay in seconds
         '''
-        self.comm(f'HOR:DEL:TIME {delay}')
+        self.comm(f'TIM:DEL:OFFS {delay}')
 
     def get_time_delay(self):
         '''
         Returns the horizontal delay in seconds
         '''
-        return float(self.comm(f'HOR:DEL:TIME?'))
+        return float(self.comm(f'TIM:DEL:OFFS?'))
 
     def set_sampling_rate(self, rate):
         """
         Set the sampling rate of the scope. Based on the time axis duration, the value set may be adjusted automatically by the scope
         rate : sampling rate in samples/second
         """
-        self.comm(f"HOR:MAIN:SAMPLERATE {rate}")
+        #get waveform length
+        waveform_length = self.get_time_scale()*10
+        #set mdepth = srate*waveform_length
+        self.comm(f"ACQ:MDEP {rate*waveform_length}")
 
     def get_sampling_rate(self):
         """
         Returns set sampling rate
         """
-        return float(self.comm("HOR:MAIN:SAMPLER?"))
+        return float(self.comm("ACQ:SRAT?"))
 
     def set_record_length(self, record_length):
         """
         Sets the number of points that can be acquired per waveform with current time base and sampling rate setting
         record_length = numeric value
         """
-        self.comm(f"HOR:RECO {record_length}")
+        self.comm(f"ACQ:MDEP {record_length}")
 
     def get_record_length(self):
         """
         Returns the current record length
         """
-        return float(self.comm(f"HOR:RECO?"))
+        return float(self.comm(f"ACQ:MDEP?"))
 
     def set_horizontal_mode(self, mode):
         """
@@ -85,20 +90,13 @@ class cInst_oscilloscope(cInst):
              = 'Constant'   Constant mode attempts to keep sample rate constant as you change the time per division setting. Record length is read only.
              = 'Manual'     Manual mode lets you change sample mode and record length. Time per division or Horizontal scale is read only
         """
-        if mode.upper() in "CONSTANT":
-            self.comm(f"HOR:MODE CONS")
-        elif mode.upper() in "MANUAL":
-            self.comm(f"HOR:MODE MAN")
-        elif mode.upper() in "AUTO":
-            self.comm(f"HOR:MODE AUTO")
-        else:
-            raise ValueError('Unknown mode value. Please use "AUTO", "CONSTANT", or "MANUAL".')
+        pass
 
     def get_horizontal_mode(self):
         """
         Return the horizontal mode. This mode determine correlation between sampling rate, time base and record length 
         """
-        return self.comm("HOR:MODE?")[:-1]
+        return 'Constant'
 
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
@@ -118,9 +116,10 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            self.comm(f"MATH{channel}:VERT:SCA {scale}")
+            self.comm(f"MATH{channel}:SCAL {scale}")
         else:
-            self.comm(f'CH{channel}:SCA {scale}')
+            self.comm('CHAN:VERN ON')
+            self.comm(f'CHAN{channel}:SCAL {scale}')
 
     def get_vertical_scale(self, channel, math = False):
         '''
@@ -129,9 +128,9 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return float(self.comm(f"MATH{channel}:VERT:SCA?"))
+            return float(self.comm(f"MATH{channel}:SCAL?"))
         else:
-            return float(self.comm(f"CH{channel}:SCA?"))
+            return float(self.comm(f"CHAN{channel}:SCAL?"))
 
     def set_vertical_position(self, channel, position, math = False):
         '''
@@ -141,9 +140,9 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            self.comm(f"MATH{channel}:VERT:POS {position}")
+            self.comm(f"MATH{channel}:OFFS {position}")
         else:
-            self.comm(f"CH{channel}:POS {position}")
+            self.comm(f"CHAN{channel}:OFFS {position}")
 
     def get_vertical_position(self, channel, math = False):
         '''
@@ -152,9 +151,9 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return float(self.comm(f"MATH{channel}:VERT:POS?"))
+            return float(self.comm(f"MATH{channel}:OFFS?"))
         else:
-            return float(self.comm(f"CH{channel}:POS?"))
+            return float(self.comm(f"CHAN{channel}:OFFS?"))
 
     def set_termination(self, channel, termination):
         '''
@@ -164,14 +163,21 @@ class cInst_oscilloscope(cInst):
         '''
         if termination not in [50, 1e6]:
             raise ValueError('Unknown Termination Value. Set to either 50 or 1e6')
-        self.comm(f"CH{channel}:TER {termination}")
+        if termination == 50:
+            self.comm(f"CHAN{channel}:IMP FIFT")
+        else:
+            self.comm(f"CHAN{channel}:IMP OMEG")
 
     def get_termination(self, channel):
         '''
         Returns the termination of the channel
         channel : integer of the channel
         '''
-        return float(self.comm(f"CH{channel}:TER?"))
+        ter = self.comm(f"CHAN{channel}:IMP?")
+        if 'FIFT' in ter:
+            return 50
+        else:
+            return 1e6
 
     def set_channel_state(self, channel, state, math = False):
         '''
@@ -182,14 +188,14 @@ class cInst_oscilloscope(cInst):
         '''
         if math:
             if state:
-                self.comm(f"SEL:MATH{channel} ON")
+                self.comm(f"MATH{channel}:DISP ON")
             else:
-                self.comm(f"SEL:MATH{channel} OFF")
+                self.comm(f"MATH{channel}:DISP OFF")
         else:
             if state:
-                self.comm(f"SEL:CH{channel} ON")
+                self.comm(f"CHAN{channel}:DISP ON")
             else:
-                self.comm(f"SEL:CH{channel} OFF")
+                self.comm(f"CHAN{channel}:DISP OFF")
 
     def get_channel_state(self, channel, math = False):
         '''
@@ -198,9 +204,9 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return int(self.comm(f"SEL:MATH{channel}?"))
+            return int(self.comm(f"MATH{channel}:DISP?"))
         else:
-            return int(self.comm(f"SEL:CH{channel}?"))
+            return int(self.comm(f"CHAN{channel}:DISP?"))
 
     def set_channel_deskew(self, channel, deskew):
         '''
@@ -208,16 +214,16 @@ class cInst_oscilloscope(cInst):
         channel : integer of the channel
         deskew :  time value (in seconds) to shift the channel between -75ns and 75ns
         '''
-        if deskew < -75e-9 or deskew > 75e-9:
-            raise ValueError("Deskew must be bewteen +/- 75ns represented in seconds")
-        self.comm(f"CH{channel}:DESKEW {deskew}")
+        if deskew < -100e-9 or deskew > 100e-9:
+            raise ValueError("Deskew must be bewteen +/- 100ns represented in seconds")
+        self.comm(f"CHAN{channel}:PROB:DEL {deskew}")
         
     def get_channel_deskew(self, channel):
         '''
         Returns the deskew value of the given channel in seconds
         channel : integer of the channel
         '''
-        return float(self.comm(f"CH{channel}:DESKEW?"))
+        return float(self.comm(f"CHAN{channel}:PROB:DEL?"))
 
     def set_math(self, channel1, channel2, operation, channel = None):
         """
@@ -231,14 +237,34 @@ class cInst_oscilloscope(cInst):
             for i in range(1,4):
                 if self.get_channel_state(i, True):
                     channel = i + 1
-        self.comm(f"MATH{channel}:DEFINE CH{channel1}{operation}CH{channel2}")
-        self.comm(f"SELECT:MATH{channel} ON")
+
+        if operation == '+':
+            self.comm(f"MATH{channel}:OPER ADD")
+        elif operation == '-':
+            self.comm(f"MATH{channel}:OPER SUBT")
+        else:
+            raise ValueError('Unknown operator. Use either "+" or "-".')
+
+        self.comm(f"MATH{channel}:SOUR1 CHAN{channel1}")
+        self.comm(f"MATH{channel}:SOUR2 CHAN{channel2}")
+        self.set_channel_state(channel, 1, True)
 
     def get_math(self, channel):
         '''
         Returns the string representation of the math equation
         '''
-        return self.comm(f'MATH{channel}:DEFINE?')
+        operation = self.comm(f"MATH{channel}:OPER?")
+        if 'ADD' in operation:
+            operation = '+'
+        elif 'SUBT' in operation:
+            operation = '-'
+        else:
+            operation = '?'
+
+        channel1 = self.comm(f"MATH{channel}:SOUR1?")[:-1]
+        channel2 = self.comm(f"MATH{channel}:SOUR2?")[:-1]
+
+        return channel1 + operation + channel2
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Channel Methods              '''
@@ -278,68 +304,83 @@ class cInst_oscilloscope(cInst):
                  
         """
         if measurement_number == None:
-            for i in range(1,8):
-                if int(self.comm(f"MEASU:MEAS{i}:STATE?")):
-                    measurement_number = i + 1
+            measurement_number = (len(self.dict_measurements) + 1)
+
+        #[type, channel, math, (channel2, math2, edge1, edge2, direction)]
+        self.dict_measurements[measurement_number] = {  'type': mtype,
+                                                        'channel': channel,
+                                                        'math': math,
+                                                        'channel2': channel2,
+                                                        'math2': math2,
+                                                        'edge1': edge1,
+                                                        'edge2': edge2,
+                                                        'direction': direction}
 
         if math:
             channel_type = 'MATH'
         else:
-            channel_type = 'CH'
+            channel_type = 'CHAN'
 
         if mtype.lower() in 'amplitude':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP AMPL; STATE ON')
+            self.comm(f'MEAS:ITEM VAMP,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VAMP,{channel_type}{channel}')
         elif mtype.lower() in 'rise':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP RISE; STATE ON')
+            self.comm(f'MEAS:ITEM RTIM,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM RTIM,{channel_type}{channel}')
         elif mtype.lower() in 'fall':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP FALL; STATE ON')
+            self.comm(f'MEAS:ITEM FTIM,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM FTIM,{channel_type}{channel}')
         elif mtype.lower() in 'pk2pk':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP PK2PK; STATE ON')
+            self.comm(f'MEAS:ITEM VPP,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VPP,{channel_type}{channel}')
         elif mtype.lower() in 'frequency':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP FREQ; STATE ON')
+            self.comm(f'MEAS:ITEM FREQ,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM FREQ,{channel_type}{channel}')
         elif mtype.lower() in 'pduty':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP PDUTY; STATE ON')
+            self.comm(f'MEAS:ITEM PDUTY,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM PDUTY,{channel_type}{channel}')
         elif mtype.lower() in 'nduty':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP NDUTY; STATE ON')
+            self.comm(f'MEAS:ITEM NDUTY,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM NDUTY,{channel_type}{channel}')
         elif mtype.lower() in 'high':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP HIGH; STATE ON')
+            self.comm(f'MEAS:ITEM VUPP,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VUPP,{channel_type}{channel}')
         elif mtype.lower() in 'low':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP LOW; STATE ON')
+            self.comm(f'MEAS:ITEM VLOW,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VLOW,{channel_type}{channel}')
         elif mtype.lower() in 'max':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP MAX; STATE ON')
+            self.comm(f'MEAS:ITEM VMAX,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VMAX,{channel_type}{channel}')
         elif mtype.lower() in 'min':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP MINI; STATE ON')
+            self.comm(f'MEAS:ITEM VMIN,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VMIN,{channel_type}{channel}')
         elif mtype.lower() in 'mean':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP MEAN; STATE ON')
+            self.comm(f'MEAS:ITEM VAVG,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM VAVG,{channel_type}{channel}')
         elif mtype.lower() in 'over':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP POV; STATE ON')
+            self.comm(f'MEAS:ITEM OVER,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM OVER,{channel_type}{channel}')
         elif mtype.lower() in 'under':
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; TYP NOV; STATE ON')
+            self.comm(f'MEAS:ITEM PRES,{channel_type}{channel}')
+            self.comm(f'MEAS:STAT:ITEM PRES,{channel_type}{channel}')
         elif mtype.lower() in 'delay':
             if math2:
                 channel_type2 = 'MATH'
             else:
-                channel_type2 = 'CH'
-
-            if direction:
-                direction  = "FORW"
-            else:
-                direction  = "BACKW"
+                channel_type2 = 'CHAN'
 
             if edge1:
-                edge1 = 'RISE'
+                edge1 = 'R'
             else:
-                edge1 = 'FALL'
+                edge1 = 'F'
 
             if edge2:
-                edge2 = 'RISE'
+                edge2 = 'R'
             else:
-                edge2 = 'FALL'
+                edge2 = 'F'
 
-            self.comm(f'MEASU:MEAS{measurement_number}:SOU1 {channel_type}{channel}; SOU2 {channel_type2}{channel2};TYP DELAY; STATE ON')
-            self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE1 {edge1}")
-            self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE2 {edge2}")
-            self.comm(f"MEASU:MEAS{measurement_number}:DEL:DIRE {direction}")
+            self.comm(f'MEAS:ITEM {edge1}{edge2}D,{channel_type}{channel},{channel_type2}{channel2}')
+            self.comm(f'MEAS:STAT:ITEM {edge1}{edge2}D,{channel_type}{channel},{channel_type2}{channel2}')
         else:
             raise ValueError("mtype must be one of the following:  ['amplitude', 'high', 'low', 'max', 'min', 'mean', 'pk2pk', 'under', 'over', 'rise', 'fall', 'pduty', 'nduty', 'frequency', 'delay']")
 
@@ -348,105 +389,47 @@ class cInst_oscilloscope(cInst):
         Returns a dictionary of the measurement parameters [type, channel, math, (channel2, math2, edge1, edge2, direction)]
         measurement_number : integer of the measurement
         '''
-        if not int(self.comm(f"MEASU:MEAS{measurement_number}:STATE?")):
-            raise ValueError('The measurement for this measurement_number is not set up')
-
-        ret = {}
-
-        mtype = self.comm(f'MEASU:MEAS{measurement_number}:TYP?')
-        if mtype.lower() in 'amplitude':
-            ret['type'] = 'amplitude'
-        elif mtype.lower() in 'rise':
-            ret['type'] = 'rise'
-        elif mtype.lower() in 'fall':
-            ret['type'] = 'fall'
-        elif mtype.lower() in 'pk2pk':
-            ret['type'] = 'pk2pk'
-        elif mtype.lower() in 'frequency':
-            ret['type'] = 'frequency'
-        elif mtype.lower() in 'pduty':
-            ret['type'] = 'pduty'
-        elif mtype.lower() in 'nduty':
-            ret['type'] = 'nduty'
-        elif mtype.lower() in 'high':
-            ret['type'] = 'high'
-        elif mtype.lower() in 'low':
-            ret['type'] = 'low'
-        elif mtype.lower() in 'max':
-            ret['type'] = 'max'
-        elif mtype.lower() in 'mini':
-            ret['type'] = 'min'
-        elif mtype.lower() in 'mean':
-            ret['type'] = 'mean'
-        elif mtype.lower() in 'pov':
-            ret['type'] = 'over'
-        elif mtype.lower() in 'nov':
-            ret['type'] = 'under'
-        elif mtype.lower() in 'delay':
-            ret['type'] = 'delay'
-        else:
-            ret['type'] = 'unknown'
-
-
-            source = self.comm(f'MEASU:MEAS{measurement_number}:SOU2?')
-            ret['math2'] = 'MATH' in source.upper()
-            ret['channel2'] = int(source[-2:-1])
-            edge1 = self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE1?")[:-1]
-            if edge1.lower() in 'rise':
-                ret['edge1'] = 1
-            elif edge1.lower() in 'fall':
-                ret['edge1'] = 0
-            else:
-                ret['edge1'] = 'unknown'
-            edge2 = self.comm(f"MEASU:MEAS{measurement_number}:DEL:EDGE2?")[:-1]
-            if edge2.lower() in 'rise':
-                ret['edge2'] = 1
-            elif edge2.lower() in 'fall':
-                ret['edge2'] = 0
-            else:
-                ret['edge2'] = 'unknown'
-            direction = self.comm(f"MEASU:MEAS{measurement_number}:DEL:DIRE?")[:-1]
-            if direction.lower() in 'forward':
-                ret['direction'] = 1
-            elif direction.lower() in 'backward':
-                ret['direction'] = 0
-            else:
-                ret['direction'] = 'unknown'
-            
-
-        source = self.comm(f'MEASU:MEAS{measurement_number}:SOU1?')
-        ret['math'] = 'MATH' in source.upper()
-        ret['channel'] = int(source[-2:-1])
-
-        return ret
+        return self.dict_measurements[measurement_number]
 
     def meas_measurement(self, measurement_number):
         '''
         Returns the last captured value of the measurement
         measurement_number : integer of measurement
         '''
-        return float(f"MEASU:MEAS{measurement_number}?")
+        if self.dict_measurements[measurement_number]['channel2'] == None:
+            return float(f"MEAS:ITEM? {self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']}")
+        else:
+            return float(f"MEAS:ITEM? {self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']},{self.dict_measurements[measurement_number]['channel2']}")
 
     def meas_mean_measurement(self,measurement_number):
         '''
         Returns the mean of the measurement
         measurement_number : integer of measurement
         '''
-        return float(self.comm(f'MEASU:MEAS{measurement_number}:MEAN?'))
+        if self.dict_measurements[measurement_number]['channel2'] == None:
+            return float(f"MEAS:STAT:ITEM? AVER,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']}")
+        else:
+            return float(f"MEAS:STAT:ITEM? AVER,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']},{self.dict_measurements[measurement_number]['channel2']}")
 
     def meas_max_measurement(self,measurement_number):
         """
         Returns the max of the measurement
         measurement_number : integer of measurement
         """
-        return float(self.comm(f"MEASU:MEAS{measurement_number}:MAX?"))
+        if self.dict_measurements[measurement_number]['channel2'] == None:
+            return float(f"MEAS:STAT:ITEM? MAX,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']}")
+        else:
+            return float(f"MEAS:STAT:ITEM? MAX,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']},{self.dict_measurements[measurement_number]['channel2']}")
 
     def meas_min_measurement(self,measurement_number):
         """
         Returns the min of the measurement
         measurement_number : integer of measurement
         """
-        return float(self.comm(f"MEASU:MEAS{measurement_number}:MINI?"))   
+        if self.dict_measurements[measurement_number]['channel2'] == None:
+            return float(f"MEAS:STAT:ITEM? MIN,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']}")
+        else:
+            return float(f"MEAS:STAT:ITEM? MIN,{self.dict_measurements[measurement_number]['type']},{self.dict_measurements[measurement_number]['channel']},{self.dict_measurements[measurement_number]['channel2']}")
 
     def set_measurement_reference(self, measurement_number, reference_type, threshold, level):
         '''
@@ -457,15 +440,16 @@ class cInst_oscilloscope(cInst):
         level : a percentage if reference type is 'percent' or a voltage if reference type is 'absolute'
         '''
         if reference_type.upper() in 'PERCENT':
-            self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod PERcent')
-            self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:{threshold.upper()} {level}")
-            
-        elif reference_type.upper() in 'ABSOLUTE':
-            self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod ABSolute')
-            self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABS:{threshold.upper()} {level}")
-
+            if threshold.upper() in 'HIGH':
+                self.comm(f"MEAS:SET:MAX {level}")
+            elif threshold.upper() in 'MID':
+                self.comm(f"MEAS:SET:MID {level}")
+            elif threshold.upper() in 'LOW':
+                self.comm(f"MEAS:SET:MIN {level}")
+            else:
+                raise ValueError('threshold must be "high", "mid", or "low"')
         else:
-            raise ValueError('reference_type must be either "percent" or "absolute"')
+            raise ValueError('Only supports "percent" reference type')
 
     def get_measurement_reference(self, measurement_number):
         '''
@@ -473,29 +457,17 @@ class cInst_oscilloscope(cInst):
         measurement_number : integer of the measurement
         '''
         ret = {}
-        reference_type = self.comm(f'MEASU:MEAS{measurement_number}:REFLevel:METHod?')
-        if reference_type.lower() in 'percent':
-            ret['reference_type'] = 'percent'
-            ret['level_high'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:HIGH?"))
-            ret['level_mid'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:MID?"))
-            ret['level_low'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:PERCENT:LOW?"))    
-        elif reference_type.lower() in 'absolute':
-            ret['reference_type'] = 'absolute'
-            ret['level_high'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:HIGH?"))
-            ret['level_mid'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:MID?"))
-            ret['level_low'] = float(self.comm(f"MEASU:MEAS{measurement_number}:REFLevel:ABSOLUTE:LOW?"))  
-        else:
-            ret['reference_type'] = 'unknown'
-            ret['level_high'] = 'unknown'
-            ret['level_mid'] = 'unknown'
-            ret['level_low'] = 'unknown'
+        ret['reference_type'] = 'percent'
+        ret['level_high'] = float(self.comm(f"MEAS:SET:MAX?"))
+        ret['level_mid'] = float(self.comm(f"MEAS:SET:MID?"))
+        ret['level_low'] = float(self.comm(f"MEAS:SET:MIN?"))    
         return ret
-        
+
     def reset_measurement_statistics(self):
         '''
         Resets the measurement stats
         '''
-        self.comm("MEASU:STATI:COUNT RESET")
+        self.comm("MEAS:STAT:RES")
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Measurement Methods          '''
@@ -514,9 +486,9 @@ class cInst_oscilloscope(cInst):
         math : boolean as to whether or not the channel integer refers to a math channel
         """
         if math:
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR MATH{channel}")
+            self.comm(f"TRIG:EDGE:SOUR MATH{channel}")
         else:
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR CH{channel}")
+            self.comm(f"TRIG:EDGE:SOUR CHAN{channel}")
 
     def set_trigger_level(self, trigger, level):
         """
@@ -525,9 +497,9 @@ class cInst_oscilloscope(cInst):
         level : voltage value (V) or "center"
         """ 
         if level.lower() in 'center':
-            self.comm(f"TRIG:{trigger.upper()}:LEV SETL")
+            self.comm(f"TRIG:EDGE:LEV 0")
         else:
-            self.comm(f"TRIG:{trigger.upper()}:LEV {level}")
+            self.comm(f"TRIG:EDGE:LEV {level}")
     
     def set_trigger_edge(self, trigger, edge):
         """
@@ -536,32 +508,32 @@ class cInst_oscilloscope(cInst):
         edge : 'rise', 'fall', or 'either'
         """ 
         if edge.upper() in "RISE":
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE RISE")
+            self.comm(f"TRIG:EDGE:SLOPE POS")
         elif edge.upper() in "FALL":
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE FALL")
+            self.comm(f"TRIG:EDGE:SLOPE NEG")
         else:
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE EITHER")
+            self.comm(f"TRIG:EDGE:SLOPE RFAL")
 
     def get_trigger_source(self, trigger):
         """
         Returns trigger source
         trigger : 'a' or 'b'
         """
-        return self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR?")[:-1]
+        return self.comm(f"TRIG:EDGE:SOUR?")[:-1]
 
     def get_trigger_level(self, trigger):
         """
         Returns trigger level in volts
         trigger : 'a' or 'b'
         """ 
-        return float(self.comm(f"TRIG:{trigger.upper()}:LEV?"))
+        return float(self.comm(f"TRIG:EDGE:LEV?"))
     
     def get_trigger_edge(self, trigger):
         """
         Returns trigger edge direction
         trigger : 'a' or 'b'
         """ 
-        return self.comm(f"TRIG:{trigger.upper()}:EDGE:SLOPE?")[:-1]
+        return self.comm(f"TRIG:EDGE:SLOPE?")[:-1]
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Trigger Methods              '''
@@ -578,15 +550,19 @@ class cInst_oscilloscope(cInst):
         filename : full path of file to save image to (must end in .png)
         invert : boolean as to whether or not the color of the image is inverted
         '''
-        self.comm("EXPORT:FORMAT PNG")
+        self.comm("SAVE:IMAG:TYPE PNG")
         
         if invert:
-            self.comm("EXPORT:IMAG INKS")
+            self.comm("SAVE:IMAG:INV ON")
         else:
-            self.comm("EXPORT:IMAG NORM")
+            self.comm("SAVE:IMAG:INV OFF")
         
-        self.comm("HARDCOPY:PORT FILE")
-        self.comm("HARDCOPY:FILENAME 'C:\temp.png'")
+        self.comm("SAVE:IMAG 'C:\temp.png'")
+
+        return "saved to device...can't seem to read from it..."
+
+        '''
+
         self.comm("HARDCOPY START")
         time.sleep(3)
         self.comm("FILESYSTEM:READFILE 'C:\temp.png'")
@@ -615,6 +591,7 @@ class cInst_oscilloscope(cInst):
             #image was transfered incorrectly
             with open(filename + '.txt','w') as fp:
                 fp.write(raw)
+        '''
 
     def get_trace_data(self, channel, math = False):
         '''
@@ -622,48 +599,24 @@ class cInst_oscilloscope(cInst):
         channel : integer of channel (0 = x data)
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
-        ydata = []
-        xdata = []
-
         if math:
-            self.comm(f"DATA:SOU MATH{channel}")
+            self.comm(f"WAV:SOU MATH{channel}")
         elif channel == 0:
-            self.comm(f"DATA:SOU CH1")
+            self.comm(f"WAV:SOU CHAN1")
         else:
-            self.comm(f"DATA:SOU CH{channel}")
-        self.comm(f"DATA:ENC ASCI")
-        self.comm("HEAD 0")
-        y_mult = float(self.comm("WFMO:YMULT?"))
-        y_offs = float(self.comm("WFMO:YOFF?"))
-        y_zero = float(self.comm("WFMO:YZERO?"))
-        x_zero = float(self.comm("WFMO:XZERO?"))
-        x_inc = float(self.comm("WFMO:XINCR?"))
-        x_ptoffset = float(self.comm("WFMO:PT_OFF?"))
-        xy_trace = [float(a) for a in self.comm("CURV?").split(",")]
+            self.comm(f"WAV:SOU CHAN{channel}")
 
-        for x,y in enumerate(xy_trace):
-            ydata.append((float(y)-y_offs)*y_mult + y_zero)
-            xdata.append((float(x)-x_ptoffset)*x_inc + x_zero)
+        self.comm(f"WAV:FORM ASC")
+
+        xy_trace = [float(a) for a in self.comm("WAV:DATA?").split(",")[1:-1]]
 
         if channel == 0:
+            xdata = []
+            for x in range(float(self.comm('WAV:POIN?'))):
+                xdata.appned(x/(self.get_sampling_rate()))
             return xdata
         else:
-            return ydata
-
-    def get_trace_to_file(self, channel, filename, math = False):
-        """
-        Gets the trace data and saves it to the given txt file in two data columns
-        channel : integer of channel
-        filename : full path of file to save image to (must end in .txt)
-        math : boolean as to whether or not the channel integer refers to a math channel
-        """
-        ydata = self.get_trace_data(channel, math)
-        xdata = self.get_trace_data(0)
-
-        with open(filename, 'w') as f:
-            for col1,col2 in zip(xdata,ydata):
-                f.writelines(f"{col1}\t{col2}\n")
-
+            return xy_trace
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Trace/Plot Methods           '''
@@ -679,9 +632,11 @@ class cInst_oscilloscope(cInst):
         mode = 'run' or 'single'
         """
         if mode.upper() in "SINGLE":
-            self.comm("ACQ:STOPA SEQ")
+            self.run_mode = 'single'
+            self.comm(":SING")
         elif mode.upper() in "RUN":
-            self.comm("ACQ:STOPA RUNST")
+            self.run_mode = 'run'
+            self.comm(":RUN")
         else:
             raise ValueError('Unknown mode value. Please use either "single" or "run".') 
 
@@ -689,7 +644,7 @@ class cInst_oscilloscope(cInst):
         """
         Gets the waveform acquisition run mode. Returns a string 'RUN' or 'SINGLE'
         """
-        return self.comm("ACQ:STOPA?")[:-1]
+        return self.run_mode
 
     def set_run_state(self, state):
         """
@@ -697,31 +652,36 @@ class cInst_oscilloscope(cInst):
         state : boolean or 1/0
         """
         if state:
-            self.comm("ACQ:STATE ON")
+            self.run_state = 1
+            if self.run_mode == 'run':
+                self.comm(':RUN')
+            else:
+                self.comm(":SING")
         else:
-            self.comm("ACQ:STATE OFF")
+            self.run_state = 0
+            self.comm(":STOP")
 
     def get_run_state(self):
         """
         Gets the acquisition state
         """
-        return self.comm("ACQ:STATE?")
+        return self.run_state
 
     def set_acquisition_mode(self, mode):
         """
         Sets the acquisition type
         mode = sample, peakdet, hires, average, envelope
         """
-        if mode.lower() in "sample":
-            self.comm(f'ACQ:MOD SAM')
+        if mode.lower() in 'sample':
+            self.comm('ACQ:TYPE NORM')
         elif mode.lower() in "peakdet":
-            self.comm(f'ACQ:MOD PEAK')
+            self.comm(f'ACQ:TYPE PEAK')
         elif mode.lower() in "hires":
-            self.comm(f'ACQ:MOD HIR')
+            self.comm(f'ACQ:MOD HRES')
         elif mode.lower() in "average":
-            self.comm(f'ACQ:MOD AVE')
+            self.comm(f'ACQ:MOD AVER')
         elif mode.lower() in "envelope":
-            self.comm(f'ACQ:MOD ENV')
+            self.comm(f'ACQ:MOD NORM')
         else:
             raise ValueError('Unknown acquisition mode. Must be set to [sample, peakdet, hires, average, envelope]')
 
@@ -729,12 +689,12 @@ class cInst_oscilloscope(cInst):
         """
         Returns the acquisition mode as a string
         """
-        mode = self.comm(f'ACQ:MOD?')[:-1]
-        if mode.lower() in "sample":
+        mode = self.comm(f'ACQ:TYPE?')[:-1]
+        if mode.lower() in "noraml":
             return 'sample'
         elif mode.lower() in "peakdet":
             return 'peakdet'
-        elif mode.lower() in "hires":
+        elif mode.lower() in "hres":
             return 'hires'
         elif mode.lower() in "average":
             return 'average'
@@ -748,13 +708,13 @@ class cInst_oscilloscope(cInst):
         Sets the number of waveforms to be acquired in averaging mode. For this, the averaging mode must be selected with set_acquisition_mode('average').
         count : number of waveforms to average
         """
-        self.comm(f"ACQ:NUMAVG {count}")
+        self.comm(f"ACQ:AVER {count}")
 
     def get_acquisition_average_count(self):
         """
         Returns number of waveforms selected for average
         """
-        return int(self.comm("ACQ:NUMAVG?"))
+        return int(self.comm("ACQ:AVER?"))
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Run/Acquisition Methods      '''

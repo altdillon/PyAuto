@@ -4,6 +4,10 @@ class cInst_meter(cInst):
     '''
     meter main class
     '''
+    def __init__(self, inst, inst_id, connection_mode, address):
+        super().__init__(inst, inst_id, connection_mode, address)
+        self.type = 'meter'
+
     def beep(self):
         '''
         Sounds a beep from the instrument. Useful if you want audio cues in a script

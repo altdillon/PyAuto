@@ -4,4 +4,6 @@ class cInst_relay(cInst):
     '''
     relay main class
     '''
-    pass
+    def __init__(self, inst, inst_id, connection_mode, address):
+        super().__init__(inst, inst_id, connection_mode, address)
+        self.type = 'relay'

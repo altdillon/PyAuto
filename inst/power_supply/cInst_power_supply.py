@@ -4,6 +4,10 @@ class cInst_power_supply(cInst):
     '''
     power supply main class
     '''
+    def __init__(self, inst, inst_id, connection_mode, address):
+        super().__init__(inst, inst_id, connection_mode, address)
+        self.type = 'power_supply'
+
     def set_channel(self):
         '''
         dummy set channel for supplies that have multiple channels
