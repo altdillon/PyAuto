@@ -39,6 +39,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     import clr
     clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
     from ModularZT_NET45 import USB_ZT
+    import ctypes, ctypes.util
     g_resource = []; u_resource = []; t_resource = []; resource_to_open = []
 
     dict_available_inst = {}
@@ -60,22 +61,43 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
 
     if do_USB:
         resource_to_open.extend(u_resource)
+
+        #relays
         mc_relays = USB_ZT()
         if mc_relays.Get_Available_SN_List("")[0] > 0:
             mc_relays_possible_sn = list(mc_relays.Get_Available_SN_List("")[1].split(" "))
             resource_to_open.extend(mc_relays_possible_sn)
+
+        #pico scopes
+        _libps6000 = ctypes.WinDLL(ctypes.util.find_library("ps6000"))
+        count = ctypes.c_int16()
+        length = ctypes.c_int16(640)
+        serials = ctypes.create_string_buffer(length.value)
+        _libps6000["ps6000EnumerateUnits"](ctypes.byref(count), serials, ctypes.byref(length))
+        if count.value > 0:
+            resource_to_open.extend(serials.value.decode().split(','))
+
     if len(TCPIP_addresses) > 0:
         for r in t_resource:
             if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
                 resource_to_open.apeend(r)
+    
     if do_GPIB:
         resource_to_open.extend(g_resource)
     
     for g in resource_to_open:
         if g[:3] not in ["GPI","USB","TCP","ASL"]:
-            mc_relays.Connect(g)
-            gid = mc_relays.Read_ModelName("")[1].replace("-","_")
-            temp = g
+            if '/' in g: #hopefully only/all pico
+                temp = ctypes.c_int16(0)
+                _libps6000["ps6000OpenUnit"](ctypes.byref(temp), ctypes.c_char_p(g.encode()))
+                line = ctypes.create_string_buffer(64)
+                required = ctypes.c_int16()
+                _libps6000["ps6000GetUnitInfo"](temp, line, ctypes.c_int16(64), ctypes.byref(required), ctypes.c_uint32(0x00000003))
+                gid = "ps" + line.value.decode()
+            else:
+                mc_relays.Connect(g)
+                gid = mc_relays.Read_ModelName("")[1].replace("-","_")
+                temp = g
         else:
             temp = rm.open_resource(g)
             try:
