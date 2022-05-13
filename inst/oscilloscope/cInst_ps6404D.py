@@ -11,7 +11,7 @@ class cInst_ps6404D(cInst_oscilloscope):
         self.ps6000 = ctypes.WinDLL(ctypes.util.find_library("ps6000"))
         
     def comm(self,command):
-        raise ValueError('Comm is not available for non-visa devices. Use the ')
+        raise ValueError('Comm is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
 
     def set_address(self, address):
         pass
