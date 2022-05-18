@@ -69,7 +69,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
             resource_to_open.extend(mc_relays_possible_sn)
 
         #pico scopes
-        _libps6000 = ctypes.WinDLL(ctypes.util.find_library("ps6000"))
+        _libps6000 = ctypes.WinDLL(os.path.join(dirname, 'inst', 'oscilloscope', 'ps6000.dll'))       #ctypes.util.find_library("ps6000"))
         count = ctypes.c_int16()
         length = ctypes.c_int16(640)
         serials = ctypes.create_string_buffer(length.value)
