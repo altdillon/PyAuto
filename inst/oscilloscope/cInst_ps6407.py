@@ -28,6 +28,29 @@ class cInst_ps6407(cInst_oscilloscope):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def set_auto_scale(self):
         """Performs front panel equivalent of AUTOSET"""
         self.comm("AUTOS EXEC")
