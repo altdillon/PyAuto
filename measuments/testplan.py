@@ -11,6 +11,7 @@ class TestPlan:
             self._insurment = insurments # make a list of insturments
         else:
             self._insurment = [insurments]
+        self._rawTestResults = {}
         pass
 
     def _setup(self):
@@ -28,16 +29,30 @@ class TestPlan:
             private method for finding lists of test function names 
         '''
         #validMethodRegEx = r'[\_][^_]*$'
+        testmethods = []
         validMethodRegEx = r'[\_][^_][0-9]{2}'
         # iterate through all the methods and see if they match with our search regex 
         for method in dir(self):
             match = re.search(validMethodRegEx,method)
             if match is not None:
-                try:
-                    getattr(self,method)()
-                except:
-                    print("failed to run a test")
+                # try:
+                #     getattr(self,method)()
+                # except:
+                #     print("failed to run a test")
+                testmethods.append(method) # append a method to the list 
 
+        return testmethods
+
+    def _runTestMethods(self,testmethods):
+        runResults = {} # dictionary to hold runtime results 
+        for testmethod in testmethods:
+            try:
+                res = getattr(self,testmethod)() # run the test method
+                runResults[testmethod] = res # add the result to the results tally
+            except:
+                print(f"failed to run test method: {testmethod}")
+        
+        return runResults # return the rest output lol
 
     def run(self):
         '''
@@ -45,6 +60,10 @@ class TestPlan:
         '''
         self._setup()
         testMethods = self._findTestMethods() # get a list of test methods 
+        if len(testMethods) > 0:
+            self._rawTestResults = self._runTestMethods(testMethods)
+        else:
+            pass # TODO raise an exception
 
         pass
 
