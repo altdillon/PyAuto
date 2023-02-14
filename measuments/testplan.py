@@ -1,5 +1,13 @@
 import re
 
+class TestPlanException(Exception):
+    '''
+    User defined class for handling TestPlan Excpetion
+    '''
+    def __init__(self,length,atleast):
+        Exception.__init__(self)
+        self.length = length
+        self.atleast = atleast
 
 class TestPlan:
     '''
