@@ -4,10 +4,9 @@ class TestPlanException(Exception):
     '''
     User defined class for handling TestPlan Excpetion
     '''
-    def __init__(self,length,atleast):
+    def __init__(self,tperror):
         Exception.__init__(self)
-        self.length = length
-        self.atleast = atleast
+        self.arg = tperror
 
 class TestPlan:
     '''
@@ -31,6 +30,16 @@ class TestPlan:
             self.setup()
         else:
             pass # TODO: add some defult test setup stuff
+
+    def _cleanup(self):
+        '''
+            private helper for running a clean up function
+            if one exisits
+        '''
+        if 'cleanup' in dir(self):
+            self.cleanup()
+        else:
+            pass # TODO: add some useful clean up stuff
 
     def _findTestMethods(self):
         '''
@@ -58,7 +67,7 @@ class TestPlan:
                 res = getattr(self,testmethod)() # run the test method
                 runResults[testmethod] = res # add the result to the results tally
             except:
-                print(f"failed to run test method: {testmethod}")
+                raise TestPlanException(f"failed to run test method: {testmethod}")
         
         return runResults # return the rest output lol
 
@@ -71,7 +80,7 @@ class TestPlan:
         if len(testMethods) > 0:
             self._rawTestResults = self._runTestMethods(testMethods)
         else:
-            pass # TODO raise an exception
+            raise TestPlanException('could not locate any valid test method identifers') 
 
         pass
 
