@@ -82,6 +82,7 @@ class TestPlan:
         else:
             raise TestPlanException('could not locate any valid test method identifers') 
 
+        self._cleanup()
         pass
 
     def sayHi(self):
