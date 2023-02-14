@@ -24,3 +24,19 @@ class cInst_VNA(cInst):
 
     def set_points(self,points):
         '''Set the data points that the VNA measures'''
+
+    def set_db_per_division(self,dvbis=10):
+        '''Set the dB's per division'''
+
+    def set_db_refrence(self,dbref=0):
+        '''Set the refrence db'''
+
+    def set_cw_freqency(self,cwfreq):
+        '''Set the continous wave freqency'''
+
+    def get_s_params(self):
+        '''return the first 4 s-pramaters'''
+
+    
+
+    # TODO: Add functions for calibration
