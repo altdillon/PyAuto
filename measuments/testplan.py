@@ -58,6 +58,8 @@ class TestPlan:
                 #     print("failed to run a test")
                 testmethods.append(method) # append a method to the list 
 
+        #TODO: find a way to sort lambda expressions
+
         return testmethods
 
     def _runTestMethods(self,testmethods):
