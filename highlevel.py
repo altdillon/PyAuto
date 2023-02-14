@@ -2,6 +2,7 @@
 Nothing will be GUI related, but these functions will be used/available in the GUI'''
 
 import os
+import platform
 
 ### Builds the lists containing the library content
 dirname = os.path.dirname(os.path.abspath(__file__))
@@ -36,9 +37,10 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     
     import pyvisa
     from .lowlevel import instantiate_inst
-    import clr
-    clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
-    from ModularZT_NET45 import USB_ZT
+    if platform.system() == 'Windows': # this will only work under windows
+        import clr
+        clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
+        from ModularZT_NET45 import USB_ZT
     import ctypes, ctypes.util
     g_resource = []; u_resource = []; t_resource = []; resource_to_open = []
 
@@ -48,6 +50,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
             dict_available_inst[directory] = []
     
     #print('Scanning all instruments...', end="\n\n")
+    # get a list of possible visa devices 
     rm = pyvisa.ResourceManager()
     all_resource = rm.list_resources()
     
