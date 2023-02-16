@@ -63,6 +63,18 @@ class TestPlan:
         return testmethods
 
     def _runTestMethods(self,testmethods):
+
+        # call back function to help with sorting
+        def _getMethodNum(methodName):
+            mnum = re.search(r'[0-9]{3}',methodName)
+            if mnum is not None:
+                return mnum[0]
+            else:
+                raise TestPlanException('tried to run invalid test method')
+
+        # sort out test methods in order have the tests run in order
+        testmethods.sort(key=_getMethodNum)
+
         runResults = {} # dictionary to hold runtime results 
         for testmethod in testmethods:
             try:
@@ -70,6 +82,8 @@ class TestPlan:
                 runResults[testmethod] = res # add the result to the results tally
             except:
                 raise TestPlanException(f"failed to run test method: {testmethod}")
+
+       
         
         return runResults # return the rest output lol
 
