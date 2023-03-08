@@ -52,6 +52,11 @@ class cInst_VNA(cInst):
     
     def set_rf_power(self,powerLevel=0):
         '''set the RF power'''
-    
+
+    # functions for setting CW
+    # CW will reqire manual trigging and some other stuff 
+
+    def set_cw_test_points(self,freq_list=None):
+        '''Set a list of discretly triggerable CWs'''
 
     # TODO: Add functions for calibration
