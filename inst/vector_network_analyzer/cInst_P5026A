@@ -74,8 +74,12 @@ class cInst_P5026A(cInst_VNA):
             # now that everything is all said and done go and return that
             return (xValues,results)
 
-    def get_rf_power(self):
-        '''return the RF power in dBm'''
-    
-    def set_rf_power(self,powerOn=True,power=None):
+    def toggle_rf_power(self,powerOn=True):
         '''set the RF power'''
+        if powerOn == True:
+            self.comm('OUTP ON')
+        else:
+            self.comm('OUTP OFF')
+
+    def set_rf_power(self,powerLevel=0):
+        self.comm(f'SOUR:POW1 {powerLevel}')
