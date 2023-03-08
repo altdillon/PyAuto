@@ -14,10 +14,6 @@ class cInst_VNA(cInst):
         '''Sets the seep time'''
         pass
 
-    def set_db_per_devision(self,db_devision):
-        '''Sets the dB per devision'''
-        pass
-
     def set_freq(self,center=None,span=None,start=None,stop=None):
         '''Set the bandwidth of the VNA'''
         pass
@@ -34,9 +30,14 @@ class cInst_VNA(cInst):
     def set_cw_freqency(self,cwfreq):
         '''Set the continous wave freqency'''
 
-    def get_s_params(self):
+    def get_s_params(self,Sparam=None):
         '''return the first 4 s-pramaters'''
 
+    def get_rf_power(self):
+        '''return the RF power in dBm'''
+    
+    def set_rf_power(self,power=None):
+        '''set the RF power'''
     
 
     # TODO: Add functions for calibration
