@@ -36,7 +36,7 @@ class cInst_VNA(cInst):
     def get_rf_power(self):
         '''return the RF power in dBm'''
     
-    def set_rf_power(self,power=None):
+    def set_rf_power(self,powerOn=True,power=None):
         '''set the RF power'''
     
 

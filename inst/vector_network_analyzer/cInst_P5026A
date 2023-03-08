@@ -1,0 +1,11 @@
+from cInst_VNA import cInst_VNA
+
+class cInst_P5026A(cInst_VNA):
+    '''
+    Wrapper for the keysight P5026A skeysight Streamline USB vector
+    Network analyzer.  This is a VNA with an intigrated spectrum Analyzer
+    That has a bandwith from DC to 32 GHz
+    '''
+
+    def __init__(self, inst, inst_id, connection_mode, address, channel):
+        super().__init__(inst, inst_id, connection_mode, address)
