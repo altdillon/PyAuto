@@ -1,4 +1,5 @@
 from cInst_VNA import cInst_VNA
+import re
 
 class cInst_P5026A(cInst_VNA):
     '''
@@ -28,23 +29,50 @@ class cInst_P5026A(cInst_VNA):
             self.comm(f'SENS:FREQ:CENT {center}') # set the center
             self.comm(f'SENS:FREQ:SPAN {span}') # set the span
         elif start is not None and stop is not None:
+            # send stop and start.  Start is sent before stop
             self.comm(f'SENS:FREQ:STOP {stop}')
             self.comm(f'SENS:FREQ:STAR {start}')
         pass
 
-    def set_points(self,points):
+    def set_points(self,points=101):
         '''Set the data points that the VNA measures'''
+        if points > 0: # do some basic validation
+            self.comm(f'SENS:SWE:POIN {points}')
+
+
     def set_db_per_division(self,dvbis=10):
         '''Set the dB's per division'''
+        self.comm(f'DISP:MEAS:Y:PDIV {dvbis}')
 
     def set_db_refrence(self,dbref=0):
         '''Set the refrence db'''
+        self.comm(f'DISP:MEAS:Y:RLEV {dbref}')
 
     def set_cw_freqency(self,cwfreq):
         '''Set the continous wave freqency'''
+        pass # may not need this for the time being 
 
-    def get_s_params(self,Sparam=None):
+    # basicly a private reason to pull in a single S pramater plot
+    def get_single_s_params(self,sparam=None):
         '''return the first 4 s-pramaters'''
+        spram_regex = r'^S[0-9][0-9]'
+        # validate the s paramater
+        matches = re.findall(spram_regex,sparam)
+        if len(matches) == 1:
+            self.comm('SYST:FPR') # get rid of the defult measument
+            self.comm('DISP:WIND1:STAT ON') # create and turn on window 1
+            self.comm(f'CALC1:MEAS1:DEF \'{sparam}\'') # set the measument
+            self.comm('DISP:MEAS1:FEED 1') # display measument in window 1 and add a trace to it
+            self.comm('CALC1:PAR:MNUM 1')
+            self.comm('SENS1:SWE:TYPE LIN')
+            # do a single sweep and return the results 
+            self.comm('SENS1:SWE:MODE SING')    
+            opcCode = self.comm('*OPC?')
+            # return the stimuls and formatted responce data
+            results = self.comm('CALC1:MEAS1:DATA:FDATA?')
+            xValues = self.comm('CALC1:MEAS1:X:VAL?')
+            # now that everything is all said and done go and return that
+            return (xValues,results)
 
     def get_rf_power(self):
         '''return the RF power in dBm'''

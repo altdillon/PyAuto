@@ -34,7 +34,11 @@ class cInst_VNA(cInst):
     def set_cw_freqency(self,cwfreq):
         '''Set the continous wave freqency'''
 
-    def get_s_params(self,Sparam=None):
+
+    def get_single_s_params(self,sparam=None):
+        '''get a single S parmater'''
+
+    def get_s_params(self,sparam=None):
         '''return the first 4 s-pramaters'''
 
     def get_rf_power(self):
