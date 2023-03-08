@@ -14,6 +14,10 @@ class cInst_VNA(cInst):
         '''Sets the seep time'''
         pass
 
+    def set_sweep_time_auto(self):
+        '''Set the sweep time to auto'''
+        pass
+
     def set_freq(self,center=None,span=None,start=None,stop=None):
         '''Set the bandwidth of the VNA'''
         pass
