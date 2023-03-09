@@ -12,12 +12,27 @@ for directory in os.listdir(os.path.join(dirname, 'inst')):
     if os.path.isdir(os.path.join(dirname, 'inst', directory)) and directory != '__pycache__':
         exec(f'inst_library["{directory}"] = [f[6:-3] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
 
+class Bench_iter():
+    '''Basic iterater for bench'''
+    def __init__(self,bench):
+        self._bench = bench
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pass
+
+
 class Bench():
     '''This class represents the bench that is hooked up to the computer. It will be created by the "scan_bench" function.'''
     def __init__(self,dict_inst):
         for instrument_type,instrument_list in dict_inst.items():
             if len(instrument_list) > 0:
                 exec(f'self.{instrument_type} = instrument_list')
+
+    def __iter__(self):
+        return Bench_iter(self) # if someone tries to iterate then return an iterater for bench
 
     def launch_gui(self):
         '''this will launch the "Bench" GUI. It will give access to the things with in Bench like the instrument GUIs'''
