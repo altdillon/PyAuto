@@ -19,9 +19,16 @@ class cInst_P5026A(cInst_VNA):
             self.comm(f'SENS:SWE:TIME {sweep_time}')
         pass
 
-    def set_sweep_time_auto(self):
+    def set_sweep_time_auto(self,auto=None):
         # set the sweep time to auto
-        self.comm('SENS:SWE:TIME:AUTO')
+        if auto is None: 
+            isauto = self.comm('SENS:SWE:TIME:AUTO?')
+            return isauto
+        else:
+            if auto is True:
+                self.comm('SENS:SWE:TIME:AUTO YES')
+            else:
+                self.comm('SENS:SWE:TIME:AUTO NO')
 
     def set_freq(self,center=None,span=None,start=None,stop=None):
         '''Set the bandwidth of the VNA'''
@@ -58,21 +65,21 @@ class cInst_P5026A(cInst_VNA):
         spram_regex = r'^S[0-9][0-9]'
         # validate the s paramater
         matches = re.findall(spram_regex,sparam)
-        if len(matches) == 1:
-            self.comm('SYST:FPR') # get rid of the defult measument
-            self.comm('DISP:WIND1:STAT ON') # create and turn on window 1
-            self.comm(f'CALC1:MEAS1:DEF \'{sparam}\'') # set the measument
-            self.comm('DISP:MEAS1:FEED 1') # display measument in window 1 and add a trace to it
-            self.comm('CALC1:PAR:MNUM 1')
-            self.comm('SENS1:SWE:TYPE LIN')
-            # do a single sweep and return the results 
-            self.comm('SENS1:SWE:MODE SING')    
-            opcCode = self.comm('*OPC?')
-            # return the stimuls and formatted responce data
-            results = self.comm('CALC1:MEAS1:DATA:FDATA?')
-            xValues = self.comm('CALC1:MEAS1:X:VAL?')
-            # now that everything is all said and done go and return that
-            return (xValues,results)
+        # if len(matches) == 1:
+        #     self.comm('SYST:FPR') # get rid of the defult measument
+        #     self.comm('DISP:WIND1:STAT ON') # create and turn on window 1
+        #     self.comm(f'CALC1:MEAS1:DEF \'{sparam}\'') # set the measument
+        #     self.comm('DISP:MEAS1:FEED 1') # display measument in window 1 and add a trace to it
+        #     self.comm('CALC1:PAR:MNUM 1')
+        #     self.comm('SENS1:SWE:TYPE LIN')
+        #     # do a single sweep and return the results 
+        #     self.comm('SENS1:SWE:MODE SING')    
+        #     opcCode = self.comm('*OPC?')
+        #     # return the stimuls and formatted responce data
+        #     results = self.comm('CALC1:MEAS1:DATA:FDATA?')
+        #     xValues = self.comm('CALC1:MEAS1:X:VAL?')
+        #     # now that everything is all said and done go and return that
+        #     return (xValues,results)
 
     def toggle_rf_power(self,powerOn=True):
         '''set the RF power'''

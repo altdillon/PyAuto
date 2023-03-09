@@ -14,7 +14,7 @@ class cInst_VNA(cInst):
         '''Sets the seep time'''
         pass
 
-    def set_sweep_time_auto(self):
+    def set_sweep_time_auto(self,auto=None):
         '''Set the sweep time to auto'''
         pass
 
