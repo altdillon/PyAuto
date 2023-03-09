@@ -83,7 +83,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     if len(TCPIP_addresses) > 0:
         for r in t_resource:
             if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
-                resource_to_open.apeend(r)
+                resource_to_open.append(r)
     
     if do_GPIB:
         resource_to_open.extend(g_resource)
