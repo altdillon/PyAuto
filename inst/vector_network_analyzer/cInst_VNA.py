@@ -18,6 +18,9 @@ class cInst_VNA(cInst):
         '''Set the sweep time to auto'''
         pass
 
+    def set_if_bandwidth(self,ifbw,meas=1):
+        '''set the IF bandwidth of the VNA'''
+
     def set_freq(self,center=None,span=None,start=None,stop=None):
         '''Set the bandwidth of the VNA'''
         pass

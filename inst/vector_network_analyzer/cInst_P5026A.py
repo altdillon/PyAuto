@@ -30,6 +30,9 @@ class cInst_P5026A(cInst_VNA):
             else:
                 self.comm('SENS:SWE:TIME:AUTO NO')
 
+    def set_if_bandwidth(self, ifbw, meas=1):
+        self.comm(f'SENSe{meas}:BANDwidth {ifbw}')
+
     def set_freq(self,center=None,span=None,start=None,stop=None):
         '''Set the bandwidth of the VNA'''
         if center is not None and span is not None:
