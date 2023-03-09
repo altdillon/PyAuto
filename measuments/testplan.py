@@ -16,10 +16,12 @@ class TestPlan:
     def __init__(self,insurments=None):
         if type(insurments) == 'list':
             self._insurment = insurments # make a list of insturments
+        elif type(insurments) == 'Bench': # see if we have a bench
+            self.bench = insurments
         else:
             self._insurment = [insurments]
         self._rawTestResults = {}
-        pass
+         
 
     def _setup(self):
         '''
