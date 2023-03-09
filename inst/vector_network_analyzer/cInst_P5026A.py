@@ -8,7 +8,7 @@ class cInst_P5026A(cInst_VNA):
     That has a bandwith from DC to 32 GHz
     '''
 
-    def __init__(self, inst, inst_id, connection_mode, address, channel):
+    def __init__(self, inst, inst_id, connection_mode, address):
         super().__init__(inst, inst_id, connection_mode, address)
 
     
