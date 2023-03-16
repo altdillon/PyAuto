@@ -959,7 +959,7 @@ class cInst_ps6404D(cInst_oscilloscope):
             PS6000_TIME_UNITS *timeUnits,
             uint32_t           fromSegmentIndex,
             uint32_t           toSegmentIndex
-        ); """
+        );  """
     make_symbol(ldlib, "GetValuesTriggerTimeOffsetBulk", "ps6000GetValuesTriggerTimeOffsetBulk64", c_uint32,
                 [c_int16, c_void_p, c_void_p, c_uint32, c_uint32])
 
