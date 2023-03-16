@@ -47,7 +47,7 @@ class cInst_ps6404D(cInst_oscilloscope):
             int16_t   handle,
             uint32_t  nSegments,
             uint32_t *nMaxSamples
-        ); """
+        );  """
     make_symbol(ldlib, "MemorySegments", "ps6000MemorySegments", c_uint32, [c_int16, c_uint32, c_void_p])
 
     """ PICO_STATUS ps6000SetChannel
