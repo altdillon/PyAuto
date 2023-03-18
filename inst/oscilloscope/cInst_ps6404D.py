@@ -1,6 +1,102 @@
 from cInst_oscilloscope import cInst_oscilloscope
 import ctypes, ctypes.util
 
+''''''''''''''''''''''''''''''''''''''''''''''''
+'''             Defining Constants           '''
+'''''''''''''''''''''''''''''''''''''''''''''''' 
+#PS6000_RANGE
+PS6000A_10MV = 0
+PS6000_20MV = 1
+PS6000_50MV = 2
+PS6000_100MV = 3
+PS6000_200MV = 4
+PS6000_500MV = 5
+PS6000_1V = 6
+PS6000_2V = 7
+PS6000_5V = 8
+PS6000_10V = 9
+PS6000_20V = 10
+PS6000_50V = 11
+PS6000_MAX_RANGES = 12
+
+#PS6000_CHANNEL
+PS6000_CHANNEL_A = 0
+PS6000_CHANNEL_B = 1
+PS6000_CHANNEL_C = 2
+PS6000_CHANNEL_D = 3
+PS6000_EXTERNAL = PS6000_MAX_CHANNELS = 4
+PS6000_TRIGGER_AUX = 5
+PS6000_MAX_TRIGGER_SOURCES = 6
+
+#PS6000_COUPLING
+PS6000_AC = 0
+PS6000_DC_1M = 1
+PS6000_DC_50R = 2
+
+#PS6000_BANDWIDTH_LIMITER
+PS6000_BW_FULL = 0
+PS6000_BW_20MHZ = 1
+PS6000_BW_25MHZ = 2
+
+#PS6000_RATIO_MODE
+PS6000_RATIO_MODE_NONE = 0
+PS6000_RATIO_MODE_AGGREGATE = 1
+PS6000_RATIO_MODE_AVERAGE = 2
+PS6000_RATIO_MODE_DECIMATE = 4
+PS6000_RATIO_MODE_DISTRIBUTION = 8
+
+#PS6000_TIME_UNITS
+PS6000_FS = 0
+PS6000_PS = 1
+PS6000_NS = 2
+PS6000_US = 3
+PS6000_MS = 4
+PS6000_S = 5
+PS6000_MAX_TIME_UNITS = 6
+
+#PS6000_TRIGGER_STATE
+PS6000_CONDITION_DONT_CARE = 0
+PS6000_CONDITION_TRUE = 1
+PS6000_CONDITION_FALSE = 2
+PS6000_CONDITION_MAX = 3
+
+#PS6000_THRESHOLD_DIRECTION
+PS6000_ABOVE = PS6000_INSIDE = 0
+PS6000_BELOW = PS6000_BELOW = 1
+PS6000_RISING = PS6000_ENTER = PS6000_NONE = 2
+PS6000_FALLING = PS6000_EXIT = 3
+PS6000_RISING_OR_FALLING = PS6000_ENTER_OR_EXIT = 4
+PS6000_ABOVE_LOWER = 5
+PS6000_BELOW_LOWER = 6
+PS6000_RISING_LOWER = 7
+PS6000_FALLING_LOWER = 8
+PS6000_POSITIVE_RUNT = 9
+PS6000_NEGATIVE_RUNT = 10
+    
+#PS6000_THRESHOLD_MODE
+PS6000_LEVEL = 0
+PS6000_WINDOW = 1
+
+#PS6000_PULSE_WIDTH_TYPE
+PS6000_PW_TYPE_NONE = 0
+PS6000_PW_TYPE_LESS_THAN = 1
+PS6000_PW_TYPE_GREATER_THAN = 2
+PS6000_PW_TYPE_IN_RANGE = 3
+PS6000_PW_TYPE_OUT_OF_RANGE = 4
+
+#PICO_INFO
+PICO_DRIVER_VERSION = 0
+PICO_USB_VERSION = 1
+PICO_HARDWARE_VERSION = 2
+PICO_VARIANT_INFO = 3
+PICO_BATCH_AND_SERIAL = 4
+PICO_CAL_DATE = 5
+PICO_KERNAL_VERSION = 6
+PICO_DIGITAL_HARDWARE_VERSION = 7
+PICO_ANALOGUE_HARDWARE_VERSION = 8
+PICO_FIRMWARE_VERSION_1 = 9
+PICO_FIREWARE_VERSION_2 = 10
+
 class cInst_ps6404D(cInst_oscilloscope):
     '''
     TBD
@@ -36,6 +132,25 @@ class cInst_ps6404D(cInst_oscilloscope):
     def disconnect(self):
         self.ps6000['ps6000CloseUnit'](self.inst)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             cInst Methods                '''
     '''''''''''''''''''''''''''''''''''''''''''''''' 
@@ -64,6 +179,21 @@ class cInst_ps6404D(cInst_oscilloscope):
         sets horizontal scale (seconds/division)
         '''
         self.comm(f'HORIZONTAL:SCA {time_scale}')
+
+        #setting timebase (time between samples) to 0 (representing 200ps, or fastest possible)
+        #then calculating noSamples to achieve desired time scale
+        #then see what happens?
+
+        timebase = ctypes.c_uint32(0)
+        noSamples = ctypes.c_uint32(int(time_scale*10/0.0000000002))
+        time_interval = ctypes.c_float()
+        oversample = ctypes.c_uint16(0)
+        maxSamples = ctypes.c_uint32()
+        segmentIndex = ctypes.c_uint32(0)
+
+        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, time_interval, oversample, maxSamples, segmentIndex)
+
+        print(time_interval.value)
 
     def get_time_scale(self):
         """
@@ -792,6 +922,14 @@ class cInst_ps6404D(cInst_oscilloscope):
     '''''''''''''''''''''''''''''''''''''''''''''''' 
 
 
+
+
+
+
+
+
+
+'''
     """ PICO_STATUS ps6000SetChannel
         (
             int16_t                   handle,
@@ -1223,3 +1361,4 @@ class cInst_ps6404D(cInst_oscilloscope):
         ); """
     make_symbol(ldlib, "GetAnalogueOffset", "ps6000GetAnalogueOffset", c_uint32,
                 [c_int16, c_int32, c_int32, c_void_p, c_void_p])
+'''
