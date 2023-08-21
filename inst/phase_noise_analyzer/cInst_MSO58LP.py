@@ -6,11 +6,34 @@ class cInst_MSO58LP(cInst_oscilloscope):
     TBD
     '''
 
-    def set_scope(self):
+    def set_pna(self, channel):
         '''
-        Sets the scope to time domain (scope) functionality
+        Sets the scope to PNA mode
         '''
-        pass
+        self.comm(f'SV:CH{channel}:SELect:RF_PHASe ON')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def set_auto_scale(self, plot):
         """Performs front panel equivalent of AUTOSET"""
