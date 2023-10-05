@@ -2,6 +2,7 @@
 Nothing will be GUI related, but these functions will be used/available in the GUI'''
 
 import os
+import platform
 
 ### Builds the lists containing the library content
 dirname = os.path.dirname(os.path.abspath(__file__))
@@ -11,12 +12,27 @@ for directory in os.listdir(os.path.join(dirname, 'inst')):
     if os.path.isdir(os.path.join(dirname, 'inst', directory)) and directory != '__pycache__':
         exec(f'inst_library["{directory}"] = [f[6:-3] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
 
+class Bench_iter():
+    '''Basic iterater for bench'''
+    def __init__(self,bench):
+        self._bench = bench
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pass
+
+
 class Bench():
     '''This class represents the bench that is hooked up to the computer. It will be created by the "scan_bench" function.'''
     def __init__(self,dict_inst):
         for instrument_type,instrument_list in dict_inst.items():
             if len(instrument_list) > 0:
                 exec(f'self.{instrument_type} = instrument_list')
+
+    def __iter__(self):
+        return Bench_iter(self) # if someone tries to iterate then return an iterater for bench
 
     def launch_gui(self):
         '''this will launch the "Bench" GUI. It will give access to the things with in Bench like the instrument GUIs'''
@@ -36,9 +52,10 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     
     import pyvisa
     from .lowlevel import instantiate_inst
-    import clr
-    clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
-    from ModularZT_NET45 import USB_ZT
+    if platform.system() == 'Windows': # this will only work under windows
+        import clr
+        clr.AddReference(os.path.join(dirname, 'inst', 'relay', 'ModularZT_NET45.dll'))
+        from ModularZT_NET45 import USB_ZT
     import ctypes, ctypes.util
     g_resource = []; u_resource = []; t_resource = []; resource_to_open = []
 
@@ -48,6 +65,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
             dict_available_inst[directory] = []
     
     #print('Scanning all instruments...', end="\n\n")
+    # get a list of possible visa devices 
     rm = pyvisa.ResourceManager()
     all_resource = rm.list_resources()
     
@@ -80,7 +98,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     if len(TCPIP_addresses) > 0:
         for r in t_resource:
             if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
-                resource_to_open.apeend(r)
+                resource_to_open.append(r)
     
     if do_GPIB:
         resource_to_open.extend(g_resource)

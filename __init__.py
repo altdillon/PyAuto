@@ -4,6 +4,7 @@ import os
 import sys
 
 from .highlevel import Bench, scan_bench, launch_gui
+from .measuments import TestPlan
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 
