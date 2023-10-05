@@ -10,18 +10,7 @@ dirname = os.path.dirname(os.path.abspath(__file__))
 inst_library = {}
 for directory in os.listdir(os.path.join(dirname, 'inst')):
     if os.path.isdir(os.path.join(dirname, 'inst', directory)) and directory != '__pycache__':
-        exec(f'inst_library["{directory}"] = [f[6:-3] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
-
-class Bench_iter():
-    '''Basic iterater for bench'''
-    def __init__(self,bench):
-        self._bench = bench
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        pass
+        exec(f'inst_library["{directory}"] = [f.split("_")[1] for f in os.listdir(r"{os.path.join(dirname, "inst", directory)}") if "cInst" in f]')
 
 
 class Bench():
@@ -96,9 +85,12 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
             resource_to_open.extend(serials.value.decode().split(','))
 
     if len(TCPIP_addresses) > 0:
-        for r in t_resource:
-            if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
-                resource_to_open.append(r)
+        if TCPIP_addresses[0] == '*':
+            resource_to_open.extend(t_resource)
+        else:
+            for r in t_resource:
+                if any(TCPIP_address in r for TCPIP_address in TCPIP_addresses):
+                    resource_to_open.apeend(r)
     
     if do_GPIB:
         resource_to_open.extend(g_resource)
@@ -135,6 +127,7 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
         gid = gid.replace(' ','')
         gid = gid.replace('-','')
         gid = gid.replace('\n','')
+        gid = gid.replace('_','')
 
         if g in g_resource:
             connection_mode = 'GPIB'
@@ -153,9 +146,9 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
         for instrument_type,instrument_list in inst_library.items():
             if gid in instrument_list:
                 unknown = False
-                dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode, unknown))
+                dict_available_inst[instrument_type].extend(instantiate_inst(gid, temp, connection_mode, unknown, instrument_type))
 
         if unknown:
-            dict_available_inst['unknown'].extend(instantiate_inst(gid, temp, connection_mode, unknown))
+            dict_available_inst['unknown'].extend(instantiate_inst(gid, temp, connection_mode, unknown, 'unknown'))
 
     return Bench(dict_available_inst)
