@@ -3,6 +3,9 @@ Nothing will be GUI related, but these functions will be used/available in the G
 
 import os
 import platform
+import tkinter
+from tkinter import ttk
+from tkinter import *
 
 ### Builds the lists containing the library content
 dirname = os.path.dirname(os.path.abspath(__file__))
@@ -16,19 +19,21 @@ for directory in os.listdir(os.path.join(dirname, 'inst')):
 class Bench():
     '''This class represents the bench that is hooked up to the computer. It will be created by the "scan_bench" function.'''
     def __init__(self,dict_inst):
+        self.equipment_list = []
         for instrument_type,instrument_list in dict_inst.items():
+            self.equipment_list += instrument_list
             if len(instrument_list) > 0:
                 exec(f'self.{instrument_type} = instrument_list')
 
     def __iter__(self):
-        return Bench_iter(self) # if someone tries to iterate then return an iterater for bench
+        return iter(self.equipment_list)
 
     def launch_gui(self):
         '''this will launch the "Bench" GUI. It will give access to the things with in Bench like the instrument GUIs'''
-        pass
+        self.gui = pyauto_bench(self)
 
 def launch_gui():
-    pass
+    pyauto()
 
 def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
     """
@@ -152,3 +157,54 @@ def scan_bench(TCPIP_addresses = [], do_USB = True, do_GPIB = True):
             dict_available_inst['unknown'].extend(instantiate_inst(gid, temp, connection_mode, unknown, 'unknown'))
 
     return Bench(dict_available_inst)
+
+class pyauto():
+    def __init__(self):
+        self.root = tkinter.Tk()
+        self.root.title("pyauto")
+
+        ttk.Label(self.root, text="Select the communication standards and scan the bench to start").grid(column=0, row=0, pady=30, padx=30, columnspan=3)
+        self.TCPIP = IntVar()
+        Checkbutton(self.root, text="TCPIP", variable=self.TCPIP, command=self.show_TCPIP).grid(column=0, row=1)
+        self.USB = IntVar()
+        Checkbutton(self.root, text="USB", variable=self.USB).grid(column=1, row=1)
+        self.GPIB = IntVar()
+        Checkbutton(self.root, text="GPIB", variable=self.GPIB).grid(column=2, row=1)
+        self.scan_bench_button = ttk.Button(self.root, text="Scan Bench", command=self.scan_and_open)
+        self.scan_bench_button.grid(column=0, row=2, pady=30, padx=30, columnspan=3)
+
+        self.root.mainloop()
+
+    def scan_and_open(self):
+        if self.TCPIP.get():
+            tcpip_text = self.TCPIP_addresses.get("1.0", "end").strip()
+            if len(tcpip_text) > 0:
+                tcpip_addresses = tcpip_text.split(',')
+            else:
+                tcpip_addresses = ['*']
+        else:
+            tcpip_addresses = []
+        b = scan_bench(TCPIP_addresses = tcpip_addresses, do_USB = self.USB.get(), do_GPIB = self.GPIB.get())
+        b.launch_gui()
+
+    def show_TCPIP(self):
+        if self.TCPIP.get():
+            #showing
+            self.TCPIP_label = ttk.Label(self.root, text="TCPIP Addresses (Leave blank if all devices)")
+            self.TCPIP_label.grid(column=0, row=2)
+            self.TCPIP_addresses = Text(self.root, height=1, width=20)
+            self.TCPIP_addresses.grid(column=1, row=2, columnspan=2, pady=30, padx=30)
+            self.scan_bench_button.grid(column=0, row=3, pady=30, padx=30, columnspan=3)
+        else:
+            self.TCPIP_label.grid_remove()
+            self.TCPIP_addresses.grid_remove()
+            self.scan_bench_button.grid(column=0, row=2, pady=30, padx=30, columnspan=3)
+        
+
+class pyauto_bench():
+    def __init__(self, bench):
+        self.bench = bench
+        self.root = tkinter.Tk()
+        self.root.title("pyauto")
+
+        self.root.mainloop()

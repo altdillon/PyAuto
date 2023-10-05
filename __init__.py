@@ -15,3 +15,5 @@ for directory in os.listdir(os.path.join(dirname,'inst')):
         sys.path.append(os.path.join(dirname, 'inst', directory))
 
 __all__ = ['Bench', 'scan_bench', 'launch_gui']
+
+#launch_gui()
