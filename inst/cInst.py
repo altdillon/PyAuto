@@ -19,7 +19,7 @@ class cInst:
         pass
 
     def launch_gui(self):
-        pass
+        print('launching gui')
 
     def reset(self):
         self.comm('*RST')

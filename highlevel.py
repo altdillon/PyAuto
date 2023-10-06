@@ -204,7 +204,24 @@ class pyauto():
 class pyauto_bench():
     def __init__(self, bench):
         self.bench = bench
+
         self.root = tkinter.Tk()
         self.root.title("pyauto")
+
+        list_labels = []
+        for inst in self.bench:
+            if inst.type not in list_labels:
+                list_labels.append(inst.type)
+
+        if len(list_labels) == 0:
+            ttk.Label(self.root, text='No Instruments Found').grid(column=0, row=0, pady=30, padx=30)
+        else:
+            ttk.Label(self.root, text='Select the instrument to launch its GUI').grid(column=0, row=0, pady=30, padx=30, columnspan=len(list_labels))
+
+            for i in range(len(list_labels)):
+                ttk.Label(self.root, text=list_labels[i].upper()).grid(column=i, row=1, pady=30, padx=30)
+                j=0
+                for inst in eval(f'self.bench.{list_labels[i]}'):
+                    ttk.Button(self.root, text=f'{list_labels[i]} {j}', command=inst.launch_gui).grid(column=i, row=2+j, pady=30, padx=30)
 
         self.root.mainloop()
