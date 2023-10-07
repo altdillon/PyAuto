@@ -1,4 +1,6 @@
-from cInst import cInst
+from cInst import cInst, pyauto_cInst_gui
+from tkinter import ttk
+from tkinter import *
 
 class cInst_power_supply(cInst):
     '''
@@ -7,6 +9,21 @@ class cInst_power_supply(cInst):
     def __init__(self, inst, inst_id, connection_mode, address):
         super().__init__(inst, inst_id, connection_mode, address)
         self.type = 'power_supply'
+
+    def window_setup(self, root):
+        ttk.Label(root, text="Default Power Supply GUI").grid(column=0, row=0, pady=30, padx=30, columnspan=3)
+        #Comm setup
+        self.comm_label = ttk.Label(root, text='Comm: ')
+        self.comm_label.grid(column=0, row=1, pady=30, padx=30)
+        self.comm_text = Text(root, height=1, width=20)
+        self.comm_text.grid(column=1, row=1)
+        self.comm_button = ttk.Button(root, text="Send", command=self.gui_comm)
+        self.comm_button.grid(column=2, row=1, pady=30, padx=30)
+        self.comm_return_label = ttk.Label(root, text='Return: ')
+        self.comm_return_label.grid(column=0, row=2, pady=30, padx=30)
+        self.comm_return = ttk.Label(root, text='')
+        self.comm_return.grid(column=1, row=2, pady=30, padx=30)
+
 
     def set_channel(self):
         '''
@@ -92,3 +109,4 @@ class cInst_power_supply(cInst):
         '''
         self.set_channel()
         return int(self.comm('OUTP?'))
+    
