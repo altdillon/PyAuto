@@ -25,9 +25,14 @@ class Bench():
         return iter(self.equipment_list)
 
     #eventually make gui functions inaccessable to users
-    def on_window_close(self):
+    def _on_window_close(self):
         self.gui.destroy()
         self.gui = None
+
+    def _cleanup(self, gui):
+        for inst in self:
+            inst.disconnect()
+        gui.destroy()
 
 
     def scan_bench(self, TCPIP_addresses = [], do_USB = True, do_GPIB = True):
@@ -169,6 +174,8 @@ class pyauto_gui():
         self.root.title("pyauto")
         self.root.wm_iconbitmap(os.path.join(dirname, "example_icon.ico"))
 
+        self.root.protocol("WM_DELETE_WINDOW", lambda: self.b._cleanup(self.root))
+
         ttk.Label(self.root, text="Select the communication standards and scan the bench to start").grid(column=0, row=0, pady=30, padx=30, columnspan=3)
         self.TCPIP = IntVar()
         Checkbutton(self.root, text="TCPIP", variable=self.TCPIP, command=self.show_TCPIP).grid(column=0, row=1)
@@ -220,7 +227,7 @@ class pyauto_bench_gui(tkinter.Toplevel):
         self.title("pyauto_bench")
         self.wm_iconbitmap(os.path.join(dirname, "example_icon.ico"))
 
-        self.protocol("WM_DELETE_WINDOW", self.bench.on_window_close)
+        self.protocol("WM_DELETE_WINDOW", self.bench._on_window_close)
 
         list_labels = []
         for inst in self.bench:
