@@ -1,6 +1,8 @@
 import tkinter
 from tkinter import ttk
+from tkinter import *
 import os
+import time
 
 class cInst:
     '''
@@ -29,16 +31,14 @@ class cInst:
         else:
             self.gui.lift()
 
-    def window_setup(self, root):
-        ttk.Label(root, text="Default cInst GUI").grid(column=0, row=0, pady=30, padx=30)
-        self.comm_label = ttk.Label(root, text='Comm: ')
-        self.comm_label.grid(column=0, row=1, pady=30, padx=30)
+    def _window_setup(self, root):
+        ttk.Label(root, text="Default cInst GUI").grid(column=0, row=0, pady=30, padx=30, columnspan=2)
+        ttk.Button(root, text="Identify", command=self.gui_identify).grid(column=2, row=0)
+        ttk.Label(root, text='Comm: ')grid(column=0, row=1, pady=30, padx=30)
         self.comm_text = Text(root, height=1, width=20)
         self.comm_text.grid(column=1, row=1)
-        self.comm_button = ttk.Button(root, text="Send", command=self.gui_comm)
-        self.comm_button.grid(column=2, row=1, pady=30, padx=30)
-        self.comm_return_label = ttk.Label(root, text='Return: ')
-        self.comm_return_label.grid(column=0, row=2, pady=30, padx=30)
+        ttk.Button(root, text="Send", command=self.gui_comm).grid(column=2, row=1, pady=30, padx=30)
+        ttk.Label(root, text='Return: ').grid(column=0, row=2, pady=30, padx=30)
         self.comm_return = ttk.Label(root, text='')
         self.comm_return.grid(column=1, row=2, pady=30, padx=30)
 
@@ -50,6 +50,15 @@ class cInst:
         else:
             self.comm_return.config(text = 'Sent!')
 
+    def gui_identify(self, persist=False):
+        if persist:
+            self.comm('DISP:TEXT "ME"')
+        else:
+            for i in range(5):
+                self.comm('DISP:TEXT "ME"')
+                time.sleep(0.3)
+                self.comm('DISP:TEXT:CLE')
+                time.sleep(0.3)
 
     def on_window_close(self):
         self.gui.destroy()
@@ -73,9 +82,9 @@ class pyauto_cInst_gui(tkinter.Toplevel):
             self.title(f"pyauto_{self.inst.type}_{self.id_number}")
         except:
             self.title("pyauto")
-        self.wm_iconbitmap(os.path.join(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0], "example_icon.ico"))
+        self.wm_iconbitmap(os.path.join(os.path.split(os.path.dirname(os.path.abspath(__file__)))[0], "Icon.ico"))
 
-        self.inst.window_setup(self)
+        self.inst._window_setup(self)
 
         self.lift()
         

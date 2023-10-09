@@ -30,8 +30,11 @@ class Bench():
         self.gui = None
 
     def _cleanup(self, gui):
-        for inst in self:
-            inst.disconnect()
+        try:
+            for inst in self:
+                inst.disconnect()
+        except:
+            print('No instruments found')
         gui.destroy()
 
 
@@ -172,7 +175,7 @@ class pyauto_gui():
 
         self.root = tkinter.Tk()
         self.root.title("pyauto")
-        self.root.wm_iconbitmap(os.path.join(dirname, "example_icon.ico"))
+        self.root.wm_iconbitmap(os.path.join(dirname, "Icon.ico"))
 
         self.root.protocol("WM_DELETE_WINDOW", lambda: self.b._cleanup(self.root))
 
@@ -225,7 +228,7 @@ class pyauto_bench_gui(tkinter.Toplevel):
         self.bench = bench
         super().__init__(root)
         self.title("pyauto_bench")
-        self.wm_iconbitmap(os.path.join(dirname, "example_icon.ico"))
+        self.wm_iconbitmap(os.path.join(dirname, "Icon.ico"))
 
         self.protocol("WM_DELETE_WINDOW", self.bench._on_window_close)
 

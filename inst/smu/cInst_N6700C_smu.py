@@ -1,15 +1,8 @@
-from cInst_power_supply import cInst_power_supply
+from cInst_smu import cInst_smu
 
-n6700C_modules = [  'N6745B', 'N6752A', 'N6733B', 'N6774A', 
-                    'N6735B', 'N6783A', 'N6732B', 'N6736B', 
-                    'N6731B', 'N6754A', 'N6753A', 'N6777A', 
-                    'N6751A', 'N6761A', 'N6756A', 'N6762A', 
-                    'N6776A', 'N6775A', 'N6773A', 'N6746B', 
-                    'N6744B', 'N6743B', 'N6741B', 'N6742B', 
-                    'N6766A', 'N6764A', 'N6763A', 'N6755A', 
-                    'N6734B', 'N6765A']
+n6700C_modules = ['N6781A', 'N6786A', 'N6785A', 'N6784A', 'N6782A']
 
-def cInst_N6700C_power_supply(inst, inst_id, connection_mode, address):
+def cInst_N6700C_smu(inst, inst_id, connection_mode, address):
     #channels = int(inst.query('SYST:CHAN?'))
     modules = [x for x in inst.query('SYS:CHAN:MOD?').strip().split(', ') if x in n6700C_modules]
     ret = []
@@ -17,7 +10,7 @@ def cInst_N6700C_power_supply(inst, inst_id, connection_mode, address):
         ret.append(cInst_N6700C_x(inst, inst_id, connection_mode, address, i+1))
     return ret
 
-class cInst_N6700C_x(cInst_power_supply):
+class cInst_N6700C_x(cInst_smu):
     '''
     TBD
     '''
