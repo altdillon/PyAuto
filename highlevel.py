@@ -71,7 +71,7 @@ class Bench():
                 g_resource.append(r)
             elif 'USB' in r:
                 u_resource.append(r)
-            elif 'TCP' in r:
+            elif ('TCP' in r) and ('hislip' not in r):      #not currently handling hislip devices
                 t_resource.append(r)
 
         if do_USB:

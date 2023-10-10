@@ -21,7 +21,7 @@ class cInst_daq(cInst):
         ttk.Label(root, text="Value").grid(column=1, row=2, pady=30, padx=30)
         ttk.Label(root, text="Units").grid(column=2, row=2, pady=30, padx=30)
         #Comm
-        ttk.Label(root, text='Comm: ')grid(column=0, row=1, pady=30, padx=30)
+        ttk.Label(root, text='Comm: ').grid(column=0, row=1, pady=30, padx=30)
         self.comm_text = Text(root, height=1, width=20)
         self.comm_text.grid(column=1, row=1)
         ttk.Button(root, text="Send", command=self.gui_comm).grid(column=2, row=1, pady=30, padx=30)

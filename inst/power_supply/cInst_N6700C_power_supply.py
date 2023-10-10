@@ -10,8 +10,8 @@ n6700C_modules = [  'N6745B', 'N6752A', 'N6733B', 'N6774A',
                     'N6734B', 'N6765A']
 
 def cInst_N6700C_power_supply(inst, inst_id, connection_mode, address):
-    #channels = int(inst.query('SYST:CHAN?'))
-    modules = [x for x in inst.query('SYS:CHAN:MOD?').strip().split(', ') if x in n6700C_modules]
+    channels = int(inst.query('SYST:CHAN?'))
+    modules = [x for x in inst.query(f'SYST:CHAN:MOD? (@1:{channels})').strip().split(', ') if x in n6700C_modules]
     ret = []
     for i in range(len(modules)):
         ret.append(cInst_N6700C_x(inst, inst_id, connection_mode, address, i+1))

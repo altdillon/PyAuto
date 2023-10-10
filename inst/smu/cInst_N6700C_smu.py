@@ -3,8 +3,8 @@ from cInst_smu import cInst_smu
 n6700C_modules = ['N6781A', 'N6786A', 'N6785A', 'N6784A', 'N6782A']
 
 def cInst_N6700C_smu(inst, inst_id, connection_mode, address):
-    #channels = int(inst.query('SYST:CHAN?'))
-    modules = [x for x in inst.query('SYS:CHAN:MOD?').strip().split(', ') if x in n6700C_modules]
+    channels = int(inst.query('SYST:CHAN?'))
+    modules = [x for x in inst.query(f'SYST:CHAN:MOD? (@1:{channels})').strip().split(', ') if x in n6700C_modules]
     ret = []
     for i in range(len(modules)):
         ret.append(cInst_N6700C_x(inst, inst_id, connection_mode, address, i+1))

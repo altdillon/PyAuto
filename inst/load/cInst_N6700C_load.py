@@ -3,8 +3,8 @@ from cInst_load import cInst_load
 n6700C_modules = ['N6792A', 'N6791A']
 
 def cInst_N6700C_load(inst, inst_id, connection_mode, address):
-    #channels = int(inst.query('SYST:CHAN?'))
-    modules = [x for x in inst.query('SYS:CHAN:MOD?').strip().split(', ') if x in n6700C_modules]
+    channels = int(inst.query('SYST:CHAN?'))
+    modules = [x for x in inst.query(f'SYST:CHAN:MOD? (@1:{channels})').strip().split(', ') if x in n6700C_modules]
     ret = []
     for i in range(len(modules)):
         ret.append(cInst_N6700C_x(inst, inst_id, connection_mode, address, i+1))
