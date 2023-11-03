@@ -34,6 +34,7 @@ class cInst:
     def _window_setup(self, root):
         ttk.Label(root, text="Default cInst GUI").grid(column=0, row=0, pady=30, padx=30, columnspan=2)
         ttk.Button(root, text="Identify", command=self.gui_identify).grid(column=2, row=0)
+        #Comm
         ttk.Label(root, text='Comm: ').grid(column=0, row=1, pady=30, padx=30)
         self.comm_text = Text(root, height=1, width=20)
         self.comm_text.grid(column=1, row=1)

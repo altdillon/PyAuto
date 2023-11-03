@@ -1,102 +1,109 @@
 from cInst_oscilloscope import cInst_oscilloscope
 import ctypes, ctypes.util
+import os
+import numpy as np
 
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 '''             Defining Constants           '''
 '''''''''''''''''''''''''''''''''''''''''''''''' 
 #PS6000_RANGE
-PS6000A_10MV = 0
-PS6000_20MV = 1
-PS6000_50MV = 2
-PS6000_100MV = 3
-PS6000_200MV = 4
-PS6000_500MV = 5
-PS6000_1V = 6
-PS6000_2V = 7
-PS6000_5V = 8
-PS6000_10V = 9
-PS6000_20V = 10
-PS6000_50V = 11
-PS6000_MAX_RANGES = 12
+PS6000A_10MV = ctypes.c_int(0)
+PS6000_20MV = ctypes.c_int(1)
+PS6000_50MV = ctypes.c_int(2)
+PS6000_100MV = ctypes.c_int(3)
+PS6000_200MV = ctypes.c_int(4)
+PS6000_500MV = ctypes.c_int(5)
+PS6000_1V = ctypes.c_int(6)
+PS6000_2V = ctypes.c_int(7)
+PS6000_5V = ctypes.c_int(8)
+PS6000_10V = ctypes.c_int(9)
+PS6000_20V = ctypes.c_int(10)
+PS6000_50V = ctypes.c_int(11)
+PS6000_MAX_RANGES = ctypes.c_int(12)
+list_ranges = [PS6000A_10MV,PS6000_20MV,PS6000_50MV,PS6000_100MV,PS6000_200MV,PS6000_500MV,PS6000_1V,PS6000_2V,PS6000_5V,PS6000_10V,PS6000_20V,PS6000_50V]
+list_scales = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5]
 
 #PS6000_CHANNEL
-PS6000_CHANNEL_A = 0
-PS6000_CHANNEL_B = 1
-PS6000_CHANNEL_C = 2
-PS6000_CHANNEL_D = 3
-PS6000_EXTERNAL = PS6000_MAX_CHANNELS = 4
-PS6000_TRIGGER_AUX = 5
-PS6000_MAX_TRIGGER_SOURCES = 6
+PS6000_CHANNEL_A = ctypes.c_int(0)
+PS6000_CHANNEL_B = ctypes.c_int(1)
+PS6000_CHANNEL_C = ctypes.c_int(2)
+PS6000_CHANNEL_D = ctypes.c_int(3)
+PS6000_EXTERNAL = PS6000_MAX_CHANNELS = ctypes.c_int(4)
+PS6000_TRIGGER_AUX = ctypes.c_int(5)
+PS6000_MAX_TRIGGER_SOURCES = ctypes.c_int(6)
 
 #PS6000_COUPLING
-PS6000_AC = 0
-PS6000_DC_1M = 1
-PS6000_DC_50R = 2
+PS6000_AC = ctypes.c_int(0)
+PS6000_DC_1M = ctypes.c_int(1)
+PS6000_DC_50R = ctypes.c_int(2)
 
 #PS6000_BANDWIDTH_LIMITER
-PS6000_BW_FULL = 0
-PS6000_BW_20MHZ = 1
-PS6000_BW_25MHZ = 2
+PS6000_BW_FULL = ctypes.c_int(0)
+PS6000_BW_20MHZ = ctypes.c_int(1)
+PS6000_BW_25MHZ = ctypes.c_int(2)
 
 #PS6000_RATIO_MODE
-PS6000_RATIO_MODE_NONE = 0
-PS6000_RATIO_MODE_AGGREGATE = 1
-PS6000_RATIO_MODE_AVERAGE = 2
-PS6000_RATIO_MODE_DECIMATE = 4
-PS6000_RATIO_MODE_DISTRIBUTION = 8
+PS6000_RATIO_MODE_NONE = ctypes.c_int(0)
+PS6000_RATIO_MODE_AGGREGATE = ctypes.c_int(1)
+PS6000_RATIO_MODE_AVERAGE = ctypes.c_int(2)
+PS6000_RATIO_MODE_DECIMATE = ctypes.c_int(4)
+PS6000_RATIO_MODE_DISTRIBUTION = ctypes.c_int(8)
 
 #PS6000_TIME_UNITS
-PS6000_FS = 0
-PS6000_PS = 1
-PS6000_NS = 2
-PS6000_US = 3
-PS6000_MS = 4
-PS6000_S = 5
-PS6000_MAX_TIME_UNITS = 6
+PS6000_FS = ctypes.c_int(0)
+PS6000_PS = ctypes.c_int(1)
+PS6000_NS = ctypes.c_int(2)
+PS6000_US = ctypes.c_int(3)
+PS6000_MS = ctypes.c_int(4)
+PS6000_S = ctypes.c_int(5)
+PS6000_MAX_TIME_UNITS = ctypes.c_int(6)
 
 #PS6000_TRIGGER_STATE
-PS6000_CONDITION_DONT_CARE = 0
-PS6000_CONDITION_TRUE = 1
-PS6000_CONDITION_FALSE = 2
-PS6000_CONDITION_MAX = 3
+PS6000_CONDITION_DONT_CARE = ctypes.c_int(0)
+PS6000_CONDITION_TRUE = ctypes.c_int(1)
+PS6000_CONDITION_FALSE = ctypes.c_int(2)
+PS6000_CONDITION_MAX = ctypes.c_int(3)
 
 #PS6000_THRESHOLD_DIRECTION
-PS6000_ABOVE = PS6000_INSIDE = 0
-PS6000_BELOW = PS6000_BELOW = 1
-PS6000_RISING = PS6000_ENTER = PS6000_NONE = 2
-PS6000_FALLING = PS6000_EXIT = 3
-PS6000_RISING_OR_FALLING = PS6000_ENTER_OR_EXIT = 4
-PS6000_ABOVE_LOWER = 5
-PS6000_BELOW_LOWER = 6
-PS6000_RISING_LOWER = 7
-PS6000_FALLING_LOWER = 8
-PS6000_POSITIVE_RUNT = 9
-PS6000_NEGATIVE_RUNT = 10
+PS6000_ABOVE = PS6000_INSIDE = ctypes.c_int(0)
+PS6000_BELOW = PS6000_BELOW = ctypes.c_int(1)
+PS6000_RISING = PS6000_ENTER = PS6000_NONE = ctypes.c_int(2)
+PS6000_FALLING = PS6000_EXIT = ctypes.c_int(3)
+PS6000_RISING_OR_FALLING = PS6000_ENTER_OR_EXIT = ctypes.c_int(4)
+PS6000_ABOVE_LOWER = ctypes.c_int(5)
+PS6000_BELOW_LOWER = ctypes.c_int(6)
+PS6000_RISING_LOWER = ctypes.c_int(7)
+PS6000_FALLING_LOWER = ctypes.c_int(8)
+PS6000_POSITIVE_RUNT = ctypes.c_int(9)
+PS6000_NEGATIVE_RUNT = ctypes.c_int(10)
     
 #PS6000_THRESHOLD_MODE
-PS6000_LEVEL = 0
-PS6000_WINDOW = 1
+PS6000_LEVEL = ctypes.c_int(0)
+PS6000_WINDOW = ctypes.c_int(1)
 
 #PS6000_PULSE_WIDTH_TYPE
-PS6000_PW_TYPE_NONE = 0
-PS6000_PW_TYPE_LESS_THAN = 1
-PS6000_PW_TYPE_GREATER_THAN = 2
-PS6000_PW_TYPE_IN_RANGE = 3
-PS6000_PW_TYPE_OUT_OF_RANGE = 4
+PS6000_PW_TYPE_NONE = ctypes.c_int(0)
+PS6000_PW_TYPE_LESS_THAN = ctypes.c_int(1)
+PS6000_PW_TYPE_GREATER_THAN = ctypes.c_int(2)
+PS6000_PW_TYPE_IN_RANGE = ctypes.c_int(3)
+PS6000_PW_TYPE_OUT_OF_RANGE = ctypes.c_int(4)
 
 #PICO_INFO
-PICO_DRIVER_VERSION = 0
-PICO_USB_VERSION = 1
-PICO_HARDWARE_VERSION = 2
-PICO_VARIANT_INFO = 3
-PICO_BATCH_AND_SERIAL = 4
-PICO_CAL_DATE = 5
-PICO_KERNAL_VERSION = 6
-PICO_DIGITAL_HARDWARE_VERSION = 7
-PICO_ANALOGUE_HARDWARE_VERSION = 8
-PICO_FIRMWARE_VERSION_1 = 9
-PICO_FIREWARE_VERSION_2 = 10
+PICO_DRIVER_VERSION = ctypes.c_int(0)
+PICO_USB_VERSION = ctypes.c_int(1)
+PICO_HARDWARE_VERSION = ctypes.c_int(2)
+PICO_VARIANT_INFO = ctypes.c_int(3)
+PICO_BATCH_AND_SERIAL = ctypes.c_int(4)
+PICO_CAL_DATE = ctypes.c_int(5)
+PICO_KERNAL_VERSION = ctypes.c_int(6)
+PICO_DIGITAL_HARDWARE_VERSION = ctypes.c_int(7)
+PICO_ANALOGUE_HARDWARE_VERSION = ctypes.c_int(8)
+PICO_FIRMWARE_VERSION_1 = ctypes.c_int(9)
+PICO_FIREWARE_VERSION_2 = ctypes.c_int(10)
+
+#Sampling Intervals
+lower_sampling = [0.0000000002, 0.0000000004, 0.0000000008, 0.0000000016, 0.0000000032]
 
 
 class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
@@ -118,7 +125,44 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
     def __init__(self, inst, inst_id, connection_mode, address):
         super().__init__(inst, inst_id, connection_mode, address)
         self.type = 'oscilloscope'
-        self.ps6000 = ctypes.WinDLL(ctypes.util.find_library("ps6000"))
+        self.ps6000 = ctypes.WinDLL(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps6000.dll'))
+
+        enabled = ctypes.c_uint16(0)
+        #self.ps6000["ps6000SetChannel"](self.inst, PS6000_CHANNEL_A, enabled, PS6000_DC_1M, PS6000_1V, 0, PS6000_BW_FULL)
+        self.ps6000["ps6000SetChannel"](self.inst, PS6000_CHANNEL_B, enabled, PS6000_DC_1M, PS6000_1V, 0, PS6000_BW_FULL)
+        self.ps6000["ps6000SetChannel"](self.inst, PS6000_CHANNEL_C, enabled, PS6000_DC_1M, PS6000_1V, 0, PS6000_BW_FULL)
+        self.ps6000["ps6000SetChannel"](self.inst, PS6000_CHANNEL_D, enabled, PS6000_DC_1M, PS6000_1V, 0, PS6000_BW_FULL)
+        self.active_channels = [1]
+
+        self.time_scale = None
+        self.trigger_delay = 0
+        self.sampling_rate = None
+        self.record_length = None
+
+        self.set_channel = {0: {'channel': PS6000_CHANNEL_A, 
+                                'enabled': ctypes.c_uint16(1),
+                                'coupling': PS6000_DC_1M,
+                                'range': PS6000_50MV,
+                                'offset': ctypes.c_float(0),
+                                'bandwidth': PS6000_BW_FULL},
+                            1: {'channel': PS6000_CHANNEL_B, 
+                                'enabled': ctypes.c_uint16(0),
+                                'coupling': PS6000_DC_1M,
+                                'range': PS6000_50MV,
+                                'offset': ctypes.c_float(0),
+                                'bandwidth': PS6000_BW_FULL},
+                            2: {'channel': PS6000_CHANNEL_C, 
+                                'enabled': ctypes.c_uint16(0),
+                                'coupling': PS6000_DC_1M,
+                                'range': PS6000_50MV,
+                                'offset': ctypes.c_float(0),
+                                'bandwidth': PS6000_BW_FULL},
+                            3: {'channel': PS6000_CHANNEL_D, 
+                                'enabled': ctypes.c_uint16(0),
+                                'coupling': PS6000_DC_1M,
+                                'range': PS6000_50MV,
+                                'offset': ctypes.c_float(0),
+                                'bandwidth': PS6000_BW_FULL}}
         
     def comm(self,command):
         raise ValueError('Comm is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
@@ -136,38 +180,21 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         self.ps6000['ps6000CloseUnit'](self.inst)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             cInst Methods                '''
     '''''''''''''''''''''''''''''''''''''''''''''''' 
 
     def set_auto_scale(self):
         """Performs front panel equivalent of AUTOSET"""
-        self.comm("AUTOS EXEC")
+        '''I can kinda do this??'''
+        raise ValueError('set_auto_scale is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
 
     def set_persistence(self, state):
         '''
         Sets the state of persistence (resets if already on)
         state : boolean as to whther or not persistence is on
         '''
-        if state:
-            self.comm('DISplay:PERSistence ON')
-            self.comm('DISplay:PERSistence:RESET')
-        else:
-            self.comm('DISplay:PERSistence OFF')
+        raise ValueError('set_persistence is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Horizontal Methods           '''
@@ -177,66 +204,123 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         '''
         sets horizontal scale (seconds/division)
         '''
-        self.comm(f'HORIZONTAL:SCA {time_scale}')
+        #self.comm(f'HORIZONTAL:SCA {time_scale}')
 
         #setting timebase (time between samples) to 0 (representing 200ps, or fastest possible)
         #then calculating noSamples to achieve desired time scale
         #then see what happens?
 
-        timebase = ctypes.c_uint32(0)
-        noSamples = ctypes.c_uint32(int(time_scale*10/0.0000000002))
+        timebase = 0
+        noSamples = int(round(time_scale*10/0.0000000002, 0))
+        while noSamples > 2000000000:
+            timebase+=1
+            if timebase < 5:
+                noSamples = int(round(time_scale*10/((2**timebase)/5000000000), 0))*len(self.active_channels)
+            else:
+                noSamples = int(round(time_scale*10/((timebase-4)/156250000), 0))*len(self.active_channels)
+
+        timebase = ctypes.c_uint32(timebase)
+        noSamples = ctypes.c_uint32(noSamples)
         time_interval = ctypes.c_float()
         oversample = ctypes.c_uint16(0)
         maxSamples = ctypes.c_uint32()
         segmentIndex = ctypes.c_uint32(0)
 
-        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, time_interval, oversample, maxSamples, segmentIndex)
+        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
 
-        print(time_interval.value)
+        self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
+        self.sampling_rate = 1 / time_interval.value
+        self.record_length = noSamples.value
 
     def get_time_scale(self):
         """
         Returns the time base(second per division)
         """
-        return float(self.comm("HOR:SCA?"))
+        if self.time_scale == None:
+            raise ValueError('Time scale not yet set.')
+        else:
+            return self.time_scale
 
     def set_time_delay(self, delay):
         '''
         Sets the horizontal delay in seconds
+        I'm not certain this is right...
         '''
-        self.comm(f'HOR:DEL:TIME {delay}')
+        self.trigger_delay = delay
+        trigger_delay = ctypes.c_uint32(int(self.get_sampling_rate()*delay))
+        self.ps6000["ps6000SetTriggerDelay"](self.inst, trigger_delay)
 
     def get_time_delay(self):
         '''
         Returns the horizontal delay in seconds
         '''
-        return float(self.comm(f'HOR:DEL:TIME?'))
+        return self.trigger_delay
 
     def set_sampling_rate(self, rate):
         """
         Set the sampling rate of the scope. Based on the time axis duration, the value set may be adjusted automatically by the scope
         rate : sampling rate in samples/second
         """
-        self.comm(f"HOR:MAIN:SAMPLERATE {rate}")
+        time_interval = 1/rate
+        if time_interval < 0.000000048: #48 ns
+            timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
+        else:
+            timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
+
+        noSamples = ctypes.c_uint32(2000000000) #2GS
+        time_interval = ctypes.c_float()
+        oversample = ctypes.c_uint16(0)
+        maxSamples = ctypes.c_uint32()
+        segmentIndex = ctypes.c_uint32(0)
+
+        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
+
+        self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
+        self.sampling_rate = 1 / time_interval.value
+        self.record_length = noSamples.value
 
     def get_sampling_rate(self):
         """
         Returns set sampling rate
         """
-        return float(self.comm("HOR:MAIN:SAMPLER?"))
+        if self.sampling_rate == None:
+            raise ValueError('Time scale not yet set.')
+        else:
+            return self.sampling_rate
 
     def set_record_length(self, record_length):
         """
         Sets the number of points that can be acquired per waveform with current time base and sampling rate setting
         record_length = numeric value
         """
-        self.comm(f"HOR:RECO {record_length}")
+        if self.time_scale == None or self.sampling_rate == None:
+            raise ValueError('Time scale not yet set.')
+
+        time_interval = 1/self.sampling_rate
+        if time_interval < 0.000000048: #48 ns
+            timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
+        else:
+            timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
+
+        noSamples = ctypes.c_uint32(record_length) #2GS
+        time_interval = ctypes.c_float()
+        oversample = ctypes.c_uint16(0)
+        maxSamples = ctypes.c_uint32()
+        segmentIndex = ctypes.c_uint32(0)
+
+        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
+
+        self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
+        self.record_length = noSamples.value
 
     def get_record_length(self):
         """
         Returns the current record length
         """
-        return float(self.comm(f"HOR:RECO?"))
+        if self.record_length == None:
+            raise ValueError('Time scale not yet set.')
+        else:
+            return self.record_length
 
     def set_horizontal_mode(self, mode):
         """
@@ -245,20 +329,13 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
              = 'Constant'   Constant mode attempts to keep sample rate constant as you change the time per division setting. Record length is read only.
              = 'Manual'     Manual mode lets you change sample mode and record length. Time per division or Horizontal scale is read only
         """
-        if mode.upper() in "CONSTANT":
-            self.comm(f"HOR:MODE CONS")
-        elif mode.upper() in "MANUAL":
-            self.comm(f"HOR:MODE MAN")
-        elif mode.upper() in "AUTO":
-            self.comm(f"HOR:MODE AUTO")
-        else:
-            raise ValueError('Unknown mode value. Please use "AUTO", "CONSTANT", or "MANUAL".')
+        raise ValueError('horizontal_mode is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
 
     def get_horizontal_mode(self):
         """
         Return the horizontal mode. This mode determine correlation between sampling rate, time base and record length 
         """
-        return self.comm("HOR:MODE?")[:-1]
+        raise ValueError('horizontal_mode is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
 
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
@@ -278,9 +355,16 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            self.comm(f"MATH{channel}:VERT:SCA {scale}")
-        else:
-            self.comm(f'CH{channel}:SCA {scale}')
+            raise ValueError('Cannot set math remotely')
+
+        self.set_channel[channel]['range'] = list_ranges[min(range(len(list_scales)), key = lambda i: abs(list_scales[i]-scale))]
+        self.ps6000["ps6000SetChannel"](self.inst,
+                                        self.set_channel[channel]['channel'],
+                                        self.set_channel[channel]['enabled'],
+                                        self.set_channel[channel]['coupling'],
+                                        self.set_channel[channel]['range'],
+                                        self.set_channel[channel]['offset'],
+                                        self.set_channel[channel]['bandwidth'])
 
     def get_vertical_scale(self, channel, math = False):
         '''
@@ -289,9 +373,8 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return float(self.comm(f"MATH{channel}:VERT:SCA?"))
-        else:
-            return float(self.comm(f"CH{channel}:SCA?"))
+            raise ValueError('Cannot get math remotely')
+        return list_scales[self.set_channel[channel]['range'].value]
 
     def set_vertical_position(self, channel, position, math = False):
         '''
@@ -301,9 +384,23 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            self.comm(f"MATH{channel}:VERT:POS {position}")
-        else:
-            self.comm(f"CH{channel}:POS {position}")
+            raise ValueError('Cannot set math remotely')
+
+        maximumVoltage = ctypes.c_float()
+        minimumVoltage = ctypes.c_float()
+        stat = self.ps6000["ps6000GetAnalogueOffset"](self.inst, self.set_channel[channel]['range'], self.set_channel[channel]['coupling'], ctypes.byref(maximumVoltage), ctypes.byref(minimumVoltage))
+
+        if not (minimumVoltage.value < position < maximumVoltage.value):
+            raise ValueError(f'Position out of range {minimumVoltage.value} to {maximumVoltage.value}')
+
+        self.set_channel[channel]['offset'] = ctypes.c_float(position)
+        self.ps6000["ps6000SetChannel"](self.inst,
+                                        self.set_channel[channel]['channel'],
+                                        self.set_channel[channel]['enabled'],
+                                        self.set_channel[channel]['coupling'],
+                                        self.set_channel[channel]['range'],
+                                        self.set_channel[channel]['offset'],
+                                        self.set_channel[channel]['bandwidth'])
 
     def get_vertical_position(self, channel, math = False):
         '''
@@ -312,9 +409,9 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return float(self.comm(f"MATH{channel}:VERT:POS?"))
-        else:
-            return float(self.comm(f"CH{channel}:POS?"))
+            raise ValueError('Cannot get math remotely')
+        
+        return self.set_channel[channel]['offset'].value
 
     def set_termination(self, channel, termination):
         '''
@@ -322,16 +419,37 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         channel : integer of the channel
         termination : Either 50 or 1e6
         '''
+
+        #NOTE: AC coupling not used
+
         if termination not in [50, 1e6]:
             raise ValueError('Unknown Termination Value. Set to either 50 or 1e6')
-        self.comm(f"CH{channel}:TER {termination}")
+        
+        if termination == 50:
+            self.set_channel[channel]['coupling'] = PS6000_DC_50R
+        else:
+            self.set_channel[channel]['coupling'] = PS6000_DC_1M
+
+        self.ps6000["ps6000SetChannel"](self.inst,
+                                        self.set_channel[channel]['channel'],
+                                        self.set_channel[channel]['enabled'],
+                                        self.set_channel[channel]['coupling'],
+                                        self.set_channel[channel]['range'],
+                                        self.set_channel[channel]['offset'],
+                                        self.set_channel[channel]['bandwidth'])
 
     def get_termination(self, channel):
         '''
         Returns the termination of the channel
         channel : integer of the channel
         '''
-        return float(self.comm(f"CH{channel}:TER?"))
+
+        #NOTE: AC coupling not used
+
+        if self.set_channel[channel]['coupling'].value == 1:
+            return 1e6
+        else:
+            return 50
 
     def set_channel_state(self, channel, state, math = False):
         '''
@@ -341,15 +459,20 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            if state:
-                self.comm(f"SEL:MATH{channel} ON")
-            else:
-                self.comm(f"SEL:MATH{channel} OFF")
+            raise ValueError('Cannot set math remotely')
         else:
             if state:
-                self.comm(f"SEL:CH{channel} ON")
+                self.set_channel[channel]['enabled'] = ctypes.c_uint16(1)
             else:
-                self.comm(f"SEL:CH{channel} OFF")
+                self.set_channel[channel]['enabled'] = ctypes.c_uint16(0)
+
+        self.ps6000["ps6000SetChannel"](self.inst,
+                                        self.set_channel[channel]['channel'],
+                                        self.set_channel[channel]['enabled'],
+                                        self.set_channel[channel]['coupling'],
+                                        self.set_channel[channel]['range'],
+                                        self.set_channel[channel]['offset'],
+                                        self.set_channel[channel]['bandwidth'])
 
     def get_channel_state(self, channel, math = False):
         '''
@@ -358,9 +481,9 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
         if math:
-            return int(self.comm(f"SEL:MATH{channel}?"))
+            raise ValueError('Cannot get math remotely')
         else:
-            return int(self.comm(f"SEL:CH{channel}?"))
+            return self.set_channel[channel]['enabled'].value
 
     def set_channel_deskew(self, channel, deskew):
         '''
@@ -368,16 +491,14 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         channel : integer of the channel
         deskew :  time value (in seconds) to shift the channel between -75ns and 75ns
         '''
-        if deskew < -75e-9 or deskew > 75e-9:
-            raise ValueError("Deskew must be bewteen +/- 75ns represented in seconds")
-        self.comm(f"CH{channel}:DESKEW {deskew}")
+        raise ValueError('PicoScope cannot set skew')
         
     def get_channel_deskew(self, channel):
         '''
         Returns the deskew value of the given channel in seconds
         channel : integer of the channel
         '''
-        return float(self.comm(f"CH{channel}:DESKEW?"))
+        raise ValueError('PicoScope cannot get skew')
 
     def set_math(self, channel1, channel2, operation, channel = None):
         """
@@ -387,18 +508,13 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         operation : '+' or '-'
         channel : integer of math channel to set up (if unspecified, adds a new math signal)
         """
-        if channel == None:
-            for i in range(1,4):
-                if self.get_channel_state(i, True):
-                    channel = i + 1
-        self.comm(f"MATH{channel}:DEFINE CH{channel1}{operation}CH{channel2}")
-        self.comm(f"SELECT:MATH{channel} ON")
+        raise ValueError('Cannot set math remotely')
 
     def get_math(self, channel):
         '''
         Returns the string representation of the math equation
         '''
-        return self.comm(f'MATH{channel}:DEFINE?')
+        raise ValueError('Cannot get math remotely')
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Channel Methods              '''
@@ -738,6 +854,7 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         filename : full path of file to save image to (must end in .png)
         invert : boolean as to whether or not the color of the image is inverted
         '''
+        raise ValueError('Depricated')
         self.comm("EXPORT:FORMAT PNG")
         
         if invert:
@@ -782,48 +899,28 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         channel : integer of channel (0 = x data)
         math : boolean as to whether or not the channel integer refers to a math channel
         '''
-        ydata = []
-        xdata = []
-
         if math:
-            self.comm(f"DATA:SOU MATH{channel}")
-        elif channel == 0:
-            self.comm(f"DATA:SOU CH1")
-        else:
-            self.comm(f"DATA:SOU CH{channel}")
-        self.comm(f"DATA:ENC ASCI")
-        self.comm("HEAD 0")
-        y_mult = float(self.comm("WFMO:YMULT?"))
-        y_offs = float(self.comm("WFMO:YOFF?"))
-        y_zero = float(self.comm("WFMO:YZERO?"))
-        x_zero = float(self.comm("WFMO:XZERO?"))
-        x_inc = float(self.comm("WFMO:XINCR?"))
-        x_ptoffset = float(self.comm("WFMO:PT_OFF?"))
-        xy_trace = [float(a) for a in self.comm("CURV?").split(",")]
-
-        for x,y in enumerate(xy_trace):
-            ydata.append((float(y)-y_offs)*y_mult + y_zero)
-            xdata.append((float(x)-x_ptoffset)*x_inc + x_zero)
+            raise ValueError('Cannot get math remotely')
 
         if channel == 0:
-            return xdata
-        else:
-            return ydata
+            return list(np.linspace(0, (self.record_length -1) / self.sampling_rate , self.record_length))
 
-    def get_trace_to_file(self, channel, filename, math = False):
-        """
-        Gets the trace data and saves it to the given txt file in two data columns
-        channel : integer of channel
-        filename : full path of file to save image to (must end in .txt)
-        math : boolean as to whether or not the channel integer refers to a math channel
-        """
-        ydata = self.get_trace_data(channel, math)
-        xdata = self.get_trace_data(0)
+        bufferMax = (ctypes.c_int16 * self.record_length)()
+        bufferMin = (ctypes.c_int16 * self.record_length)()
+        self.ps6000["ps6000SetDataBuffers"](self.inst,
+                                            self.set_channel[channel]['channel'],
+                                            ctypes.byref(bufferMax),
+                                            ctypes.byref(bufferMin),
+                                            ctypes.c_uint32(self.record_length),
+                                            PS6000_RATIO_MODE_NONE)
 
-        with open(filename, 'w') as f:
-            for col1,col2 in zip(xdata,ydata):
-                f.writelines(f"{col1}\t{col2}\n")
+        overflow = ctypes.c_int16()
+        cmaxSamples = ctypes.c_int32(self.record_length)
+        self.ps6000["ps6000GetValues"](self.inst, 0, ctypes.byref(cmaxSamples), 1, PS6000_RATIO_MODE_NONE, 0, ctypes.byref(overflow))
 
+        maxADC = 32512
+        vRange = list_scales[self.set_channel[channel]['range'].value]*10
+        return [(x.value * vRange) / maxADC for x in bufferMax]
 
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Trace/Plot Methods           '''
