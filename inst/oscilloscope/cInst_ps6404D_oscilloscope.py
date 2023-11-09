@@ -64,6 +64,14 @@ PS6000_CONDITION_DONT_CARE = ctypes.c_int(0)
 PS6000_CONDITION_TRUE = ctypes.c_int(1)
 PS6000_CONDITION_FALSE = ctypes.c_int(2)
 PS6000_CONDITION_MAX = ctypes.c_int(3)
+class PS6000_TRIGGER_CONDITIONS(ctypes.Structure):
+    _fields_ = [("channelA", ctypes.c_int),
+                ("channelB", ctypes.c_int),
+                ("channelC", ctypes.c_int),
+                ("channelD", ctypes.c_int),
+                ("external", ctypes.c_int),
+                ("aux", ctypes.c_int),
+                ("pulseWidthQualifier", ctypes.c_int),]
 
 #PS6000_THRESHOLD_DIRECTION
 PS6000_ABOVE = PS6000_INSIDE = ctypes.c_int(0)
@@ -135,6 +143,7 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         self.active_channels = [1]
 
         self.time_scale = None
+        self.timebase = None
         self.trigger_delay = 0
         self.sampling_rate = None
         self.record_length = None
@@ -163,6 +172,8 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
                                 'range': PS6000_50MV,
                                 'offset': ctypes.c_float(0),
                                 'bandwidth': PS6000_BW_FULL}}
+
+        self.state = 1
         
     def comm(self,command):
         raise ValueError('Comm is not available for non-visa devices. Use the library (.ps6000) and the handle (.inst) to make a raw command.')
@@ -206,27 +217,27 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         '''
         #self.comm(f'HORIZONTAL:SCA {time_scale}')
 
-        #setting timebase (time between samples) to 0 (representing 200ps, or fastest possible)
+        #setting self.timebase (time between samples) to 0 (representing 200ps, or fastest possible)
         #then calculating noSamples to achieve desired time scale
         #then see what happens?
 
-        timebase = 0
+        self.timebase = 0
         noSamples = int(round(time_scale*10/0.0000000002, 0))
         while noSamples > 2000000000:
-            timebase+=1
-            if timebase < 5:
-                noSamples = int(round(time_scale*10/((2**timebase)/5000000000), 0))*len(self.active_channels)
+            self.timebase+=1
+            if self.timebase < 5:
+                noSamples = int(round(time_scale*10/((2**self.timebase)/5000000000), 0))*len(self.active_channels)
             else:
-                noSamples = int(round(time_scale*10/((timebase-4)/156250000), 0))*len(self.active_channels)
+                noSamples = int(round(time_scale*10/((self.timebase-4)/156250000), 0))*len(self.active_channels)
 
-        timebase = ctypes.c_uint32(timebase)
+        self.timebase = ctypes.c_uint32(self.timebase)
         noSamples = ctypes.c_uint32(noSamples)
         time_interval = ctypes.c_float()
         oversample = ctypes.c_uint16(0)
         maxSamples = ctypes.c_uint32()
         segmentIndex = ctypes.c_uint32(0)
 
-        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
+        self.ps6000["ps6000Getself.timebase2"](self.inst, self.timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
 
         self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
         self.sampling_rate = 1 / time_interval.value
@@ -263,9 +274,9 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         """
         time_interval = 1/rate
         if time_interval < 0.000000048: #48 ns
-            timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
+            self.timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
         else:
-            timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
+            self.timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
 
         noSamples = ctypes.c_uint32(2000000000) #2GS
         time_interval = ctypes.c_float()
@@ -273,7 +284,7 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         maxSamples = ctypes.c_uint32()
         segmentIndex = ctypes.c_uint32(0)
 
-        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
+        self.ps6000["ps6000Getself.timebase2"](self.inst, self.timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
 
         self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
         self.sampling_rate = 1 / time_interval.value
@@ -298,9 +309,9 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
 
         time_interval = 1/self.sampling_rate
         if time_interval < 0.000000048: #48 ns
-            timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
+            self.timebase = ctypes.c_uint32(min(range(len(lower_sampling)), key = lambda i: abs(lower_sampling[i]-time_interval)))
         else:
-            timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
+            self.timebase = ctypes.c_uint32(int(time_interval*156250000)+4)
 
         noSamples = ctypes.c_uint32(record_length) #2GS
         time_interval = ctypes.c_float()
@@ -308,7 +319,7 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         maxSamples = ctypes.c_uint32()
         segmentIndex = ctypes.c_uint32(0)
 
-        self.ps6000["ps6000GetTimebase2"](self.inst, timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
+        self.ps6000["ps6000Getself.timebase2"](self.inst, self.timebase, noSamples, ctypes.byref(time_interval), oversample, ctypes.byref(maxSamples), segmentIndex)
 
         self.time_scale = time_interval.value * noSamples.value / (10 * len(self.active_channels) * 1000000000)
         self.record_length = noSamples.value
@@ -781,18 +792,45 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
     ''''''''''''''''''''''''''''''''''''''''''''''''
     '''             Trigger Methods              '''
     ''''''''''''''''''''''''''''''''''''''''''''''''
+
+    ps6000SetTriggerChannelDirections
+    ps6000SetTriggerChannelProperties
+
+
+
         
     def set_trigger_source(self, trigger, channel, math):
         """
         Sets the trigger source
         trigger : 'a' or 'b'
-        channel : integer of the channel
+        channel : integer of the channel (Aux = 0)
         math : boolean as to whether or not the channel integer refers to a math channel
         """
         if math:
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR MATH{channel}")
+            raise ValueError('Cannot trigger from math channel')
         else:
-            self.comm(f"TRIG:{trigger.upper()}:EDGE:SOUR CH{channel}")
+            conditions = PS6000_TRIGGER_CONDITIONS()
+            conditions.channelA = PS6000_CONDITION_DONT_CARE
+            conditions.channelB = PS6000_CONDITION_DONT_CARE
+            conditions.channelC = PS6000_CONDITION_DONT_CARE
+            conditions.channelD = PS6000_CONDITION_DONT_CARE
+            conditions.external = PS6000_CONDITION_DONT_CARE
+            conditions.aux = PS6000_CONDITION_DONT_CARE
+            conditions.pulseWidthQualifier = PS6000_CONDITION_DONT_CARE
+            match channel:
+                case 0:
+                    conditions.aux = PS6000_CONDITION_TRUE
+                case 1:
+                    conditions.channelA = PS6000_CONDITION_TRUE
+                case 2:
+                    conditions.channelB = PS6000_CONDITION_TRUE
+                case 3:
+                    conditions.channelC = PS6000_CONDITION_TRUE
+                case 4:
+                    conditions.channelD = PS6000_CONDITION_TRUE
+                case default:
+                    raise ValueError("Invalid Channel")
+            self.ps6000['ps6000SetTriggerChannelConditions'](self.inst, ctypes.byref(conditions), ctypes.c_int16(7))
 
     def set_trigger_level(self, trigger, level):
         """
@@ -953,16 +991,28 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
         Starts or stops the acquisition. Call this after setting set_run_mode('Single').
         state : boolean or 1/0
         """
+
         if state:
-            self.comm("ACQ:STATE ON")
+            pre_trig = ctypes.c_uint32(int(5465))
+            post_trig = ctypes.c_uint32(self.record_length - pre_trig.value)
+            if self.timebase == None:
+                raise ValueError('Timebase not set')
+            oversample = ctypes.c_int16(0)
+            timeIndisposedMs = ctypes.c_int32()
+            segmentIndex = ctypes.c_uint32(1)
+            lpReady = None
+            pParameter = ctypes.c_void_p()
+            self.ps6000['ps6000RunBlock'](self.inst, pre_trig, post_trig, self.timebase, oversample, ctypes.byref(timeIndisposedMs), segmentIndex, lpReady, ctypes.byref(pParameter))
         else:
-            self.comm("ACQ:STATE OFF")
+            self.ps6000['ps6000Stop'](self.inst)
+
+        self.state = state
 
     def get_run_state(self):
         """
         Gets the acquisition state
         """
-        return self.comm("ACQ:STATE?")
+        return self.state
 
     def set_acquisition_mode(self, mode):
         """
@@ -1039,10 +1089,10 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
     make_symbol(ldlib, "SetChannel", "ps6000SetChannel", c_uint32,
                 [c_int16, c_int32, c_int16, c_int32, c_int32, c_float, c_int32])
 
-    """ PICO_STATUS ps6000GetTimebase
+    """ PICO_STATUS ps6000Getself.timebase
         (
             int16_t   handle,
-            uint32_t  timebase,
+            uint32_t  self.timebase,
             uint32_t  noSamples,
             int32_t  *timeIntervalNanoseconds,
             int16_t   oversample,
@@ -1050,17 +1100,17 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
             uint32_t  segmentIndex
         ); """
 
-    """ PICO_STATUS ps6000GetTimebase2
+    """ PICO_STATUS ps6000Getself.timebase2
         (
             int16_t   handle,
-            uint32_t  timebase,
+            uint32_t  self.timebase,
             uint32_t  noSamples,
             float    *timeIntervalNanoseconds,
             int16_t   oversample,
             uint32_t *maxSamples,
             uint32_t  segmentIndex
         ); """
-    make_symbol(ldlib, "GetTimebase", "ps6000GetTimebase2", c_uint32,
+    make_symbol(ldlib, "Getself.timebase", "ps6000Getself.timebase2", c_uint32,
                 [c_int16, c_uint32, c_uint32, c_void_p, c_int16, c_void_p, c_uint32])
 
     
@@ -1265,7 +1315,7 @@ class cInst_ps6404D_oscilloscope(cInst_oscilloscope):
             int16_t           handle,
             uint32_t          noOfPreTriggerSamples,
             uint32_t          noOfPostTriggerSamples,
-            uint32_t          timebase,
+            uint32_t          self.timebase,
             int16_t           oversample,
             int32_t          *timeIndisposedMs,
             uint32_t          segmentIndex,
